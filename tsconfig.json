@@ -7,10 +7,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
+    "outDir": "./dist/types",
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": true,
-    "declaration": true
+    "declaration": true,
+    "emitDeclarationOnly": true
   },
-  "include": ["src"]
+  "include": ["src", "tests"]
 }
