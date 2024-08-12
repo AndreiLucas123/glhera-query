@@ -132,8 +132,6 @@ export function storeRequest<T>(
 
       error.value = err;
       status.value = 'error';
-
-      throw err;
     } finally {
       if (abortController !== lastAbortController) {
         return;
