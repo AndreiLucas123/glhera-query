@@ -6,6 +6,8 @@ import { QuerySignal, signalFactory } from './signalFactory';
 export type StoreRequest<T> = {
   /**
    * Signal that indicates the data fetched from the server.
+   *
+   * If tried to access the value before the data is fetched, it will throw an error.
    */
   data: QuerySignal<T>;
 
@@ -60,11 +62,31 @@ export type StoreRequest<T> = {
 
 //
 //
+const dataProxyHandler: ProxyHandler<QuerySignal> = {
+  get(target, property, receiver) {
+    if (property === 'value') {
+      if (target.value === notFetchedSymbol) {
+        throw new Error('Data not fetched yet');
+      }
+    }
+    return Reflect.get(target, property, receiver);
+  },
+};
+
+//
+//
+
+const notFetchedSymbol = Symbol.for('notFetched');
+
+//
+//
 
 export function storeRequest<T>(
   fetcher: (signal: AbortSignal) => Promise<T>,
 ): StoreRequest<T> {
-  const data = signalFactory<T>(null);
+  const dataSignal = signalFactory<T>(notFetchedSymbol);
+  const dataProxy = new Proxy(dataSignal, dataProxyHandler);
+
   const pending = signalFactory<boolean>(false);
   const error = signalFactory<any>(null);
   const status = signalFactory<'idle' | 'pending' | 'error' | 'success'>(
@@ -100,8 +122,9 @@ export function storeRequest<T>(
         return;
       }
 
-      data.value = dataFetched;
+      dataSignal.value = dataFetched;
       error.value = null;
+      status.value = 'success';
     } catch (err) {
       if (abortController !== lastAbortController) {
         return;
@@ -125,7 +148,7 @@ export function storeRequest<T>(
   //
 
   return {
-    data,
+    data: dataProxy,
     pending,
     error,
     status,
