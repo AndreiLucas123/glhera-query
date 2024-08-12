@@ -3,6 +3,7 @@
 
 export type QuerySignal<T = any> = {
   value: T;
+  subscribe: (callback: (value: T) => void) => () => void;
 };
 
 //

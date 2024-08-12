@@ -3,7 +3,7 @@ import { QuerySignal, signalFactory } from './signalFactory';
 //
 //
 
-export type StoreRequest<T> = {
+export type StoreRequest<T, U> = {
   /**
    * Signal that indicates the data fetched from the server.
    *
@@ -41,9 +41,16 @@ export type StoreRequest<T> = {
   fetchStatus: QuerySignal<'fetching' | 'idle'>;
 
   /**
+   * Source of the data that will be used to fetch the data.
+   *
+   * This signal will be used to trigger a new fetch when the value changes.
+   */
+  source: QuerySignal<U>;
+
+  /**
    * Method called by `StoreRequest.fetch`
    */
-  fetcher: (signal: AbortSignal) => Promise<T>;
+  fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>;
 
   /**
    * Will cancel the current fetch request if it is pending.
@@ -81,12 +88,14 @@ const notFetchedSymbol = Symbol.for('notFetched');
 //
 //
 
-export function storeRequest<T>(
-  fetcher: (signal: AbortSignal) => Promise<T>,
-): StoreRequest<T> {
-  const dataSignal = signalFactory<T>(notFetchedSymbol);
-  const dataProxy = new Proxy(dataSignal, dataProxyHandler);
+export function storeRequest<T, U>(
+  fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>,
+  source: QuerySignal<U>,
+): StoreRequest<T, U> {
+  //
+  //
 
+  const data = signalFactory<T>(notFetchedSymbol);
   const pending = signalFactory<boolean>(false);
   const error = signalFactory<any>(null);
   const status = signalFactory<'idle' | 'pending' | 'error' | 'success'>(
@@ -116,13 +125,13 @@ export function storeRequest<T>(
     }
 
     try {
-      const dataFetched = await fetcher(abortController.signal);
+      const dataFetched = await fetcher(abortController.signal, source.value);
 
       if (abortController !== lastAbortController) {
         return;
       }
 
-      dataSignal.value = dataFetched;
+      data.value = dataFetched;
       error.value = null;
       status.value = 'success';
     } catch (err) {
@@ -145,12 +154,18 @@ export function storeRequest<T>(
   //
   //
 
+  source.subscribe(fetch);
+
+  //
+  //
+
   return {
-    data: dataProxy,
+    data: new Proxy(data, dataProxyHandler),
     pending,
     error,
     status,
     fetchStatus,
+    source,
     fetch,
     fetcher,
   };
