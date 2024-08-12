@@ -1,0 +1,33 @@
+{
+  "name": "glhera-query",
+  "version": "0.1.0",
+  "author": "Simple Organization",
+  "scripts": {
+    "build": "tsc && rollup -c && node esbuild.mjs",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "test": "playwright test",
+    "prepack": "pnpm build"
+  },
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Simple-Organization/glhera-query.git"
+  },
+  "bugs": "https://github.com/Simple-Organization/glhera-query/issues",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "prettier": "^3.3.3",
+    "rollup": "^4.20.0",
+    "rollup-plugin-dts": "^6.1.1",
+    "typescript": "^5.5.4",
+    "@playwright/test": "^1.46.0"
+  },
+  "files": [
+    "dist/index.d.ts",
+    "dist/index.js"
+  ],
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "packageManager": "pnpm@9.6.0"
+}
