@@ -1,4 +1,4 @@
-import { QuerySignal } from './signalFactory';
+import { QuerySignal, signalFactory } from './signalFactory';
 
 //
 //
@@ -41,17 +41,96 @@ export type StoreRequest<T> = {
   /**
    * Method called by `StoreRequest.fetch`
    */
-  fetcher: () => Promise<T>;
+  fetcher: (signal: AbortSignal) => Promise<T>;
 
   /**
    * Will cancel the current fetch request if it is pending.
    *
    * Then it will fetch the data again and update the signals.
+   *
+   * Will not throw an error if the fetch fails. The error will be stored in the `error` signal.
    */
-  fetch: () => Promise<T>;
+  fetch: () => Promise<void>;
 
   /**
    * Data from the last fetch that executed
    */
   lastFetchTime?: Date;
 };
+
+//
+//
+
+export function storeRequest<T>(
+  fetcher: (signal: AbortSignal) => Promise<T>,
+): StoreRequest<T> {
+  const data = signalFactory<T>(null);
+  const pending = signalFactory<boolean>(false);
+  const error = signalFactory<any>(null);
+  const status = signalFactory<'idle' | 'pending' | 'error' | 'success'>(
+    'idle',
+  );
+  const fetchStatus = signalFactory<'fetching' | 'idle'>('idle');
+
+  let lastAbortController: AbortController | null = null;
+
+  //
+  //
+
+  async function fetch(): Promise<void> {
+    if (lastAbortController) {
+      lastAbortController.abort();
+    }
+
+    const abortController = new AbortController();
+    lastAbortController = abortController;
+
+    fetchStatus.value = 'fetching';
+    pending.value = true;
+
+    // Only update the status if it is idle
+    if (status.value === 'idle') {
+      status.value = 'pending';
+    }
+
+    try {
+      const dataFetched = await fetcher(abortController.signal);
+
+      if (abortController !== lastAbortController) {
+        return;
+      }
+
+      data.value = dataFetched;
+      error.value = null;
+    } catch (err) {
+      if (abortController !== lastAbortController) {
+        return;
+      }
+
+      error.value = err;
+      status.value = 'error';
+
+      throw err;
+    } finally {
+      if (abortController !== lastAbortController) {
+        return;
+      }
+
+      fetchStatus.value = 'idle';
+      pending.value = false;
+    }
+  }
+
+  //
+  //
+
+  return {
+    data,
+    pending,
+    error,
+    status,
+    fetchStatus,
+    fetch,
+    fetcher,
+  };
+}

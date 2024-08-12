@@ -28,9 +28,9 @@ Por conta dessas diferenças, para que um app usando **glhera-query** faça gran
 
 ## Recursos sendo implementados
 
-- Cancellable fetch (Abort Signal)
-- Refetch stale. Copiar o [onlineManager](https://tanstack.com/query/latest/docs/reference/onlineManager)?
-- Infinite Queries
-- Scroll Restoration? (Is needed?)
-- [Retry](https://tanstack.com/query/latest/docs/framework/react/guides/query-retries)
-- [Window Focus Refetching](https://tanstack.com/query/latest/docs/framework/react/guides/window-focus-refetching) Copiar o [focusManager](https://tanstack.com/query/latest/docs/reference/focusManager)?
+- [x] Cancellable fetch (Abort Signal)
+- [ ] Refetch stale. Copiar o [onlineManager](https://tanstack.com/query/latest/docs/reference/onlineManager)?
+- [ ] Infinite Queries
+- [ ] Scroll Restoration? (Is needed?)
+- [ ] [Retry](https://tanstack.com/query/latest/docs/framework/react/guides/query-retries)
+- [ ] [Window Focus Refetching](https://tanstack.com/query/latest/docs/framework/react/guides/window-focus-refetching) Copiar o [focusManager](https://tanstack.com/query/latest/docs/reference/focusManager)?
