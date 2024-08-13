@@ -92,17 +92,51 @@ const notFetchedSymbol = Symbol.for('notFetched');
 //
 //
 
+export type StoreRequestOptions<T, U> = {
+  fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>;
+  data?: T;
+  source?: U;
+  error?: any;
+};
+
+//
+//
+
 export function storeRequest<T, U>(
   fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>,
-  initialData?: T,
-  initialSource?: U,
+): StoreRequest<T, U>;
+export function storeRequest<T, U>(
+  opts: StoreRequestOptions<T, U>,
+): StoreRequest<T, U>;
+
+export function storeRequest<T, U>(
+  opts:
+    | ((signal: AbortSignal, sourceData: U) => Promise<T>)
+    | StoreRequestOptions<T, U>,
 ): StoreRequest<T, U> {
+  let fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>;
+
+  if (typeof opts === 'function') {
+    fetcher = opts;
+    opts = { fetcher };
+  } else {
+    fetcher = opts.fetcher;
+
+    if (!fetcher) {
+      throw new Error('fetcher is required');
+    }
+
+    if (opts.data !== undefined && opts.error !== undefined) {
+      throw new Error('data and error cannot be defined at the same time');
+    }
+  }
+
   //
   //
 
   const data = signalFactory<T>(notFetchedSymbol);
   const pending = signalFactory<boolean>(false);
-  const error = signalFactory<any>(null);
+  const error = signalFactory<any>(opts.error);
   const status = signalFactory<'idle' | 'pending' | 'error' | 'success'>(
     'idle',
   );
@@ -142,7 +176,7 @@ export function storeRequest<T, U>(
       }
 
       data.value = dataFetched;
-      error.value = null;
+      error.value = undefined;
       status.value = 'success';
     } catch (err) {
       if (abortController !== lastAbortController) {
@@ -164,7 +198,7 @@ export function storeRequest<T, U>(
   //
   //
 
-  const source = signalFactory<U>(initialSource);
+  const source = signalFactory<U>(opts.source);
 
   let ignoreSource = true;
   source.subscribe(() => {
@@ -193,9 +227,18 @@ export function storeRequest<T, U>(
   //
   //
 
-  if (initialData !== undefined) {
-    data.value = initialData;
+  if (opts.data !== undefined) {
+    data.value = opts.data;
     status.value = 'success';
+    output.lastFetchTime = new Date();
+  }
+
+  //
+  //
+
+  if (opts.error !== undefined) {
+    error.value = opts.error;
+    status.value = 'error';
     output.lastFetchTime = new Date();
   }
 

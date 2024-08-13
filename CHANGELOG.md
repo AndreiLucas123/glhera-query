@@ -1,5 +1,11 @@
 ## Changelog
 
+### [2.0.0] - 2024-08-12
+
+Added
+
+- Now can receive options in `storeRequest` with `data`, `error`, `source`
+
 ### [1.1.0] - 2024-08-12
 
 Added
@@ -18,7 +24,7 @@ Fixed
 
 ### [1.0.0] - 2024-08-12
 
-Added 
+Added
 
 - `storeRequest`
 
