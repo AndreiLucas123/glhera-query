@@ -44,8 +44,10 @@ export type StoreRequest<T, U> = {
    * Source of the data that will be used to fetch the data.
    *
    * This signal will be used to trigger a new fetch when the value changes.
+   *
+   * If the source is undefined, it will not fetch the data.
    */
-  source: QuerySignal<U>;
+  source: QuerySignal<U | undefined>;
 
   /**
    * Method called by `StoreRequest.fetch`
@@ -56,6 +58,8 @@ export type StoreRequest<T, U> = {
    * Will cancel the current fetch request if it is pending.
    *
    * Then it will fetch the data again and update the signals.
+   *
+   * If the source is undefined, it will not fetch the data.
    *
    * Will not throw an error if the fetch fails. The error will be stored in the `error` signal.
    */
@@ -90,7 +94,8 @@ const notFetchedSymbol = Symbol.for('notFetched');
 
 export function storeRequest<T, U>(
   fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>,
-  source: QuerySignal<U>,
+  initialData?: T,
+  initialSource?: U,
 ): StoreRequest<T, U> {
   //
   //
@@ -109,6 +114,10 @@ export function storeRequest<T, U>(
   //
 
   async function fetch(): Promise<void> {
+    if (source.value === undefined) {
+      return;
+    }
+
     if (lastAbortController) {
       lastAbortController.abort();
     }
@@ -125,6 +134,7 @@ export function storeRequest<T, U>(
     }
 
     try {
+      output.lastFetchTime = new Date();
       const dataFetched = await fetcher(abortController.signal, source.value);
 
       if (abortController !== lastAbortController) {
@@ -154,6 +164,8 @@ export function storeRequest<T, U>(
   //
   //
 
+  const source = signalFactory<U>(initialSource);
+
   let ignoreSource = true;
   source.subscribe(() => {
     if (ignoreSource) {
@@ -167,7 +179,7 @@ export function storeRequest<T, U>(
   //
   //
 
-  return {
+  const output: StoreRequest<T, U> = {
     data: new Proxy(data, dataProxyHandler),
     pending,
     error,
@@ -177,4 +189,18 @@ export function storeRequest<T, U>(
     fetch,
     fetcher,
   };
+
+  //
+  //
+
+  if (initialData !== undefined) {
+    data.value = initialData;
+    status.value = 'success';
+    output.lastFetchTime = new Date();
+  }
+
+  //
+  //
+
+  return output;
 }

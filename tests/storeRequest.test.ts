@@ -37,10 +37,7 @@ test.describe('storeRequest', () => {
   //
 
   test('When fetch is successful, must return the data', async () => {
-    const store = storeRequest(
-      async () => ({ name: 'John' }),
-      signalFactory(null),
-    );
+    const store = storeRequest(async () => ({ name: 'John' }));
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(null);
@@ -61,10 +58,7 @@ test.describe('storeRequest', () => {
   //
 
   test('If try to access data before a fetch, must trow a error', async () => {
-    const store = storeRequest(
-      async () => ({ name: 'John' }),
-      signalFactory(null),
-    );
+    const store = storeRequest(async () => ({ name: 'John' }));
 
     expect(() => store.data.value).toThrowError('Data not fetched yet');
   });
@@ -73,10 +67,7 @@ test.describe('storeRequest', () => {
   //
 
   test('When is fetching, it must be pending', async () => {
-    const store = storeRequest(
-      async () => ({ name: 'John' }),
-      signalFactory(null),
-    );
+    const store = storeRequest(async () => ({ name: 'John' }));
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(null);
@@ -99,7 +90,7 @@ test.describe('storeRequest', () => {
   test('When is throws, must ajust the signals accordingly', async () => {
     const store = storeRequest(async () => {
       throw new Error('Error fetching data');
-    }, signalFactory(null));
+    });
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(null);
@@ -133,7 +124,7 @@ test.describe('storeRequest', () => {
         throw new Error('Error fetching data');
       }
       return { name: 'John' };
-    }, signalFactory(null));
+    });
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(null);
@@ -180,16 +171,20 @@ test.describe('storeRequest', () => {
     //
     //
 
-    const store = storeRequest(async (signal) => {
-      const waited = timeSignal.value;
+    const store = storeRequest(
+      async (signal) => {
+        const waited = timeSignal.value;
 
-      await new Promise((resolve) => setTimeout(resolve, waited));
+        await new Promise((resolve) => setTimeout(resolve, waited));
 
-      if (signal.aborted) {
-        aborted = true;
-      }
-      return { name: 'John', waited };
-    }, signalFactory(null));
+        if (signal.aborted) {
+          aborted = true;
+        }
+        return { name: 'John', waited };
+      },
+      undefined,
+      1,
+    );
 
     //
     //
@@ -225,12 +220,7 @@ test.describe('storeRequest', () => {
   //
 
   test('When change the source, it must trigger a fetch', async () => {
-    const source = signalFactory({ name: 'John' });
-
-    const store = storeRequest(
-      async (signal, sourceData) => sourceData as any,
-      source,
-    );
+    const store = storeRequest(async (signal, sourceData) => sourceData as any);
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(null);
@@ -247,5 +237,54 @@ test.describe('storeRequest', () => {
     await Promise.resolve();
 
     expect(store.data.value).toEqual({ name: 'Doe' });
+  });
+
+  //
+  //
+
+  test('If the source is undefined, it should not fetch', async () => {
+    let count = 0;
+    const store = storeRequest(async () => ++count);
+
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(null);
+    expect(store.status.value).toBe('idle');
+    expect(store.fetchStatus.value).toBe('idle');
+
+    await store.fetch();
+
+    expect(() => store.data.value).toThrowError('Data not fetched yet');
+    store.source.value = 1;
+
+    await Promise.resolve();
+
+    expect(store.data.value).toEqual(1);
+  });
+
+  //
+  //
+
+  test('The fetch date must be set', async () => {
+    let count = 0;
+    const store = storeRequest(async () => ++count, undefined, 1);
+
+    await store.fetch();
+
+    expect(store.lastFetchTime).toBeInstanceOf(Date);
+  });
+
+  //
+  //
+
+  test('When the initialData is set, it must be success', async () => {
+    let count = 1;
+    const store = storeRequest(async () => ++count, 1, 1);
+
+    expect(store.data.value).toEqual(1);
+    expect(store.lastFetchTime).toBeInstanceOf(Date);
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(null);
+    expect(store.status.value).toBe('success');
+    expect(store.fetchStatus.value).toBe('idle');
   });
 });
