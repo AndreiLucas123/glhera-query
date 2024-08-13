@@ -5,11 +5,12 @@ import { setSignalFactory, storeRequest } from '../src';
 //
 
 test.describe('storeRequest', () => {
-  const signalFactory = (initial: any) => {
-    const callbacks = new Set<Function>();
+  const signalFactory = <T>(initial: T) => {
+    const callbacks = new Set<(value: T) => void>();
     let value = initial;
 
-    const subscribe = (callback: Function) => {
+    const subscribe = (callback: (value: T) => void) => {
+      callback(value);
       callbacks.add(callback);
       return () => {
         callbacks.delete(callback);
@@ -29,15 +30,17 @@ test.describe('storeRequest', () => {
       subscribe,
     };
   };
-  setSignalFactory(signalFactory);
 
-  const emptySource = signalFactory(null);
+  setSignalFactory(signalFactory);
 
   //
   //
 
   test('When fetch is successful, must return the data', async () => {
-    const store = storeRequest(async () => ({ name: 'John' }), emptySource);
+    const store = storeRequest(
+      async () => ({ name: 'John' }),
+      signalFactory(null),
+    );
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(null);
@@ -58,7 +61,10 @@ test.describe('storeRequest', () => {
   //
 
   test('If try to access data before a fetch, must trow a error', async () => {
-    const store = storeRequest(async () => ({ name: 'John' }), emptySource);
+    const store = storeRequest(
+      async () => ({ name: 'John' }),
+      signalFactory(null),
+    );
 
     expect(() => store.data.value).toThrowError('Data not fetched yet');
   });
@@ -67,7 +73,10 @@ test.describe('storeRequest', () => {
   //
 
   test('When is fetching, it must be pending', async () => {
-    const store = storeRequest(async () => ({ name: 'John' }), emptySource);
+    const store = storeRequest(
+      async () => ({ name: 'John' }),
+      signalFactory(null),
+    );
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(null);
@@ -90,7 +99,7 @@ test.describe('storeRequest', () => {
   test('When is throws, must ajust the signals accordingly', async () => {
     const store = storeRequest(async () => {
       throw new Error('Error fetching data');
-    }, emptySource);
+    }, signalFactory(null));
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(null);
@@ -124,7 +133,7 @@ test.describe('storeRequest', () => {
         throw new Error('Error fetching data');
       }
       return { name: 'John' };
-    }, emptySource);
+    }, signalFactory(null));
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(null);
@@ -180,7 +189,7 @@ test.describe('storeRequest', () => {
         aborted = true;
       }
       return { name: 'John', waited };
-    }, emptySource);
+    }, signalFactory(null));
 
     //
     //

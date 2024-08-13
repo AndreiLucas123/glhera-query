@@ -154,7 +154,15 @@ export function storeRequest<T, U>(
   //
   //
 
-  source.subscribe(fetch);
+  let ignoreSource = true;
+  source.subscribe(() => {
+    if (ignoreSource) {
+      return;
+    }
+
+    fetch();
+  });
+  ignoreSource = false;
 
   //
   //
