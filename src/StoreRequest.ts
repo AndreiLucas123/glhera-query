@@ -1,4 +1,4 @@
-import { QuerySignal, signalFactory } from './signalFactory';
+import { Signal, signalFactory } from 'signal-factory';
 
 //
 //
@@ -9,17 +9,17 @@ export type StoreRequest<T, U> = {
    *
    * If tried to access the value before the data is fetched, it will throw an error.
    */
-  data: QuerySignal<T>;
+  data: Signal<T>;
 
   /**
    * Signal that indicates if the status === 'pending'
    */
-  pending: QuerySignal<boolean>;
+  pending: Signal<boolean>;
 
   /**
    * Signal that indicates the error that occurred while fetching the data.
    */
-  error: QuerySignal<any>;
+  error: Signal<any>;
 
   /**
    * Signal that indicates the status of the data
@@ -29,7 +29,7 @@ export type StoreRequest<T, U> = {
    * - `error` - An error occurred while fetching the data.
    * - `success` - The data was fetched successfully.
    */
-  status: QuerySignal<'idle' | 'pending' | 'error' | 'success'>;
+  status: Signal<'idle' | 'pending' | 'error' | 'success'>;
 
   /**
    * Signal that indicates if the data is being fetched.
@@ -38,7 +38,7 @@ export type StoreRequest<T, U> = {
    * - `idle` - The data is not being fetched.
    * - `fetching` - The data is being fetched.
    */
-  fetchStatus: QuerySignal<'fetching' | 'idle'>;
+  fetchStatus: Signal<'fetching' | 'idle'>;
 
   /**
    * Source of the data that will be used to fetch the data.
@@ -47,7 +47,7 @@ export type StoreRequest<T, U> = {
    *
    * If the source is undefined, it will not fetch the data.
    */
-  source: QuerySignal<U | undefined>;
+  source: Signal<U | undefined>;
 
   /**
    * Method called by `StoreRequest.fetch`
@@ -73,7 +73,7 @@ export type StoreRequest<T, U> = {
 
 //
 //
-const dataProxyHandler: ProxyHandler<QuerySignal> = {
+const dataProxyHandler: ProxyHandler<Signal> = {
   get(target, property, receiver) {
     if (property === 'value') {
       if (target.value === notFetchedSymbol) {

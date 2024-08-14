@@ -1,37 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { setSignalFactory, storeRequest } from '../src';
+import { setSignalFactory } from 'signal-factory';
+import { signal } from 'signal-factory/vanilla';
+import { storeRequest } from '../src';
 
 //
 //
 
 test.describe('storeRequest', () => {
-  const signalFactory = <T>(initial: T) => {
-    const callbacks = new Set<(value: T) => void>();
-    let value = initial;
-
-    const subscribe = (callback: (value: T) => void) => {
-      callback(value);
-      callbacks.add(callback);
-      return () => {
-        callbacks.delete(callback);
-      };
-    };
-
-    return {
-      get value() {
-        return value;
-      },
-      set value(newValue) {
-        value = newValue;
-        for (const callback of callbacks) {
-          callback(value);
-        }
-      },
-      subscribe,
-    };
-  };
-
-  setSignalFactory(signalFactory);
+  setSignalFactory(signal);
 
   //
   //
@@ -178,7 +154,7 @@ test.describe('storeRequest', () => {
 
   test('Should cancel the fetch accordingly', async () => {
     let aborted = false;
-    const timeSignal = signalFactory(300);
+    const timeSignal = signal(300);
 
     //
     //
