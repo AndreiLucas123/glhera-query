@@ -3,7 +3,7 @@ import { signalFactory } from 'signal-factory';
 /**
  * A manager that handles the focus and online state of the browser.
  */
-export type Manager = {
+export type GLHeraManager = {
   /**
    * The current value of the signal.
    */
@@ -23,7 +23,7 @@ export type Manager = {
 /**
  * Manages the focus state of the browser.
  */
-export function focusManager(): Manager {
+export function focusManager(): GLHeraManager {
   const getVisibilityState = () =>
     globalThis.document?.visibilityState !== 'hidden';
 
@@ -52,7 +52,7 @@ export function focusManager(): Manager {
 /**
  * Manages the online/offline state of the browser.
  */
-export function onlineManager(): Manager {
+export function onlineManager(): GLHeraManager {
   const isOnline = signalFactory<boolean>(navigator.onLine);
 
   //
@@ -81,7 +81,7 @@ export function onlineManager(): Manager {
  * @param initial - The initial value of the signal.
  * @returns A manager that always returns the initial value.
  */
-export function testingManager(initial: boolean): Manager {
+export function testingManager(initial: boolean): GLHeraManager {
   const signal = signalFactory<boolean>(initial);
 
   //

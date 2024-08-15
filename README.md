@@ -19,7 +19,6 @@ Pode ser **legal** ter um recurso adicional, mas requer `bundle` e custa recurso
 
 > Notas: Não consideramos que esses recursos sejam desnecessários para todas as aplicações, alguns dos recursos do **TanStack Query** podem ser cruciais dependendo da aplicação que está sendo feita
 
-- Não precisa de uma query ser `enabled`, pois o `fetch` é chamado **manualmente** ou **sincronizado**
 - `prefetching`
 - `mutations`
 - cache com keys
@@ -37,6 +36,11 @@ Por conta dessas diferenças, para que um app usando **glhera-query** faça gran
   - Fez uma versão adaptada do `focusManager`
 - [ ] Refetch stale. Copiar o [onlineManager](https://tanstack.com/query/latest/docs/reference/onlineManager)?
   - Fez uma versão adaptada do `onlineManager`
+
+## Mudanças ao longo do tempo
+
+- Agora as queries precisam ser `enabled` e quando elas foram `enabled` elas passam a reagir aos `query params` da rota
+- Adicionado `focusManager`, `onlineManager` e um `client` como do `React Query`, mas eles ainda não estão sendo usados pelo `storeRequest`
 
 ### Configurando reatividade (signals)
 

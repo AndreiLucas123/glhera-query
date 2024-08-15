@@ -5,6 +5,11 @@ import { Signal, signalFactory } from 'signal-factory';
 
 export type StoreRequest<T, U> = {
   /**
+   * Signal that indicates if the store is enabled and will fetch the data.
+   */
+  enabled: Signal<any>;
+
+  /**
    * Signal that indicates the data fetched from the server.
    *
    * If tried to access the value before the data is fetched, it will throw an error.
@@ -59,7 +64,7 @@ export type StoreRequest<T, U> = {
    *
    * Then it will fetch the data again and update the signals.
    *
-   * If the source is undefined, it will not fetch the data.
+   * If the enabled signal is false, it will not fetch the data.
    *
    * Will not throw an error if the fetch fails. The error will be stored in the `error` signal.
    */
@@ -97,6 +102,7 @@ export type StoreRequestOptions<T, U> = {
   data?: T;
   source?: U;
   error?: any;
+  enabled?: boolean;
 };
 
 //
@@ -108,6 +114,8 @@ export function storeRequest<T, U>(
 export function storeRequest<T, U>(
   opts: StoreRequestOptions<T, U>,
 ): StoreRequest<T, U>;
+
+//
 
 export function storeRequest<T, U>(
   opts:
@@ -134,6 +142,7 @@ export function storeRequest<T, U>(
   //
   //
 
+  const enabled = signalFactory<boolean>(opts.enabled ?? false);
   const data = signalFactory<T>(notFetchedSymbol);
   const pending = signalFactory<boolean>(false);
   const error = signalFactory<any>(opts.error);
@@ -148,7 +157,7 @@ export function storeRequest<T, U>(
   //
 
   async function fetch(): Promise<void> {
-    if (source.value === undefined) {
+    if (!enabled.value) {
       return;
     }
 
@@ -220,6 +229,7 @@ export function storeRequest<T, U>(
     status,
     fetchStatus,
     source,
+    enabled,
     fetch,
     fetcher,
   };
