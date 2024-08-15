@@ -41,9 +41,10 @@ export type StoreRequest<T, U> = {
    * (Useful for changing the opacity of the data being displayed, or displaying a loading spinner without blocking the UI)
    *
    * - `idle` - The data is not being fetched.
+   * - `paused` - The data is not being being fetched because the network (onlineManager) when tried fetch was offline.
    * - `fetching` - The data is being fetched.
    */
-  fetchStatus: Signal<'fetching' | 'idle'>;
+  fetchStatus: Signal<'fetching' | 'paused' | 'idle'>;
 
   /**
    * Method called by `StoreRequest.fetch`

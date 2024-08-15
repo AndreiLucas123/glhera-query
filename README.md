@@ -42,6 +42,7 @@ Por conta dessas diferenças, para que um app usando **glhera-query** faça gran
 
 - Agora as queries precisam ser `enabled` e quando elas foram `enabled` elas passam a reagir aos `query params` da rota
 - Adicionado `focusManager`, `onlineManager` e um `client` como do `React Query`, mas eles ainda não estão sendo usados pelo `storeRequest`
+- Caso uma query seja `enabled` des do princípio, ela já é criada fazendo `fetch`
 
 A maior diferença entre o **glhera-query** e o **React Query** agora é que o **glhera-query** é **signal based** e ele **invalida** o cache de outros itens da lista, ao invés de ficar guardando diversos itens
 

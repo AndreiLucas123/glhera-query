@@ -19,7 +19,7 @@ export type GLHeraClientOptions = {
 //
 //
 
-export function glheraQueryClient(
+export function glheraClient(
   opts: GLHeraClientOptions = {},
 ): GLHeraClient {
   //

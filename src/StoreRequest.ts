@@ -41,14 +41,6 @@ export function storeRequest<T, U>(
   const source = opts.source;
   let unsubSource: (() => void) | null = null;
 
-  if (!fetcher) {
-    throw new Error('fetcher is required');
-  }
-
-  if (!source) {
-    throw new Error('source is required');
-  }
-
   //
   //
 
@@ -60,7 +52,7 @@ export function storeRequest<T, U>(
   const status = signalFactory<'idle' | 'pending' | 'error' | 'success'>(
     'idle',
   );
-  const fetchStatus = signalFactory<'fetching' | 'idle'>('idle');
+  const fetchStatus = signalFactory<'fetching' | 'paused' | 'idle'>('idle');
 
   let lastAbortController: AbortController | null = null;
 
