@@ -245,14 +245,14 @@ test.describe('storeRequest', () => {
   //
   //
 
-  test('When the initialData is set, it must be success and not fetch enabled', async () => {
+  test('When the initialData is set, it must be success', async () => {
     let count = 1;
     const store = storeRequest({
       fetcher: async () => ++count,
-      enabled: true,
-      data: 1,
       source,
     });
+
+    store.setInitial({ data: 1 });
 
     expect(store.data.value).toEqual(1);
     expect(store.lastFetchTime).toBeInstanceOf(Date);
@@ -269,9 +269,10 @@ test.describe('storeRequest', () => {
     let count = 1;
     const store = storeRequest({
       fetcher: async () => ++count,
-      data: 1,
       source,
     });
+
+    store.setInitial({ data: 1 });
 
     expect(store.data.value).toEqual(1);
     expect(store.lastFetchTime).toBeInstanceOf(Date);
@@ -304,8 +305,9 @@ test.describe('storeRequest', () => {
     const store = storeRequest({
       fetcher: async () => ++count,
       source,
-      error: 'Some error',
     });
+
+    store.setInitial({ error: 'Some error' });
 
     expect(store.lastFetchTime).toBeInstanceOf(Date);
     expect(store.pending.value).toBe(false);
@@ -317,16 +319,20 @@ test.describe('storeRequest', () => {
   //
   //
 
-  test('When the initialData and initialError is set, it must throws', async () => {
+  test('When the initial.data and initial.error is set, it must show error', async () => {
     let count = 1;
+    const store = storeRequest({
+      fetcher: async () => ++count,
+      source,
+    });
 
-    expect(() => {
-      const store = storeRequest({
-        fetcher: async () => ++count,
-        source,
-        data: 1,
-        error: 'Some error',
-      });
-    }).toThrowError('data and error cannot be defined at the same time');
+    store.setInitial({ data: 1, error: 'Some error' });
+
+    expect(store.data.value).toEqual(1);
+    expect(store.lastFetchTime).toBeInstanceOf(Date);
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe('Some error');
+    expect(store.status.value).toBe('error');
+    expect(store.fetchStatus.value).toBe('idle');
   });
 });

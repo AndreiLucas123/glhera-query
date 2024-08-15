@@ -49,17 +49,14 @@ export function storeRequest<T, U>(
     throw new Error('source is required');
   }
 
-  if (opts.data !== undefined && opts.error !== undefined) {
-    throw new Error('data and error cannot be defined at the same time');
-  }
-
   //
   //
 
   const enabled = signalFactory<boolean>(opts.enabled ?? false);
   const data = signalFactory<T>(notFetchedSymbol);
   const pending = signalFactory<boolean>(false);
-  const error = signalFactory<any>(opts.error);
+  // @ts-ignore
+  const error = signalFactory<any>();
   const status = signalFactory<'idle' | 'pending' | 'error' | 'success'>(
     'idle',
   );
@@ -132,6 +129,23 @@ export function storeRequest<T, U>(
   //
   //
 
+  function setInitial(initial: { data?: T; error?: any }) {
+    output.lastFetchTime = new Date();
+
+    if (initial.data !== undefined) {
+      data.value = initial.data;
+      status.value = 'success';
+    }
+
+    if (initial.error !== undefined) {
+      error.value = initial.error;
+      status.value = 'error';
+    }
+  }
+
+  //
+  //
+
   const output: StoreRequest<T, U> = {
     data: new Proxy(data, dataProxyHandler),
     pending,
@@ -141,31 +155,9 @@ export function storeRequest<T, U>(
     enabled,
     fetch,
     fetcher,
+    setInitial,
     destroy,
   };
-
-  //
-  //
-
-  let initialSuccess = false; // Used to avoid calling fetch when the data is set initially
-
-  if (opts.data !== undefined) {
-    data.value = opts.data;
-    status.value = 'success';
-    output.lastFetchTime = new Date();
-    if (enabled.value) {
-      initialSuccess = true;
-    }
-  }
-
-  //
-  //
-
-  if (opts.error !== undefined) {
-    error.value = opts.error;
-    status.value = 'error';
-    output.lastFetchTime = new Date();
-  }
 
   //
   //  Subscribe to the enabled signal
@@ -173,14 +165,7 @@ export function storeRequest<T, U>(
   const unsubEnabled = enabled.subscribe((_enabled) => {
     if (_enabled) {
       if (!unsubSource) {
-        unsubSource = source.subscribe(() => {
-          if (initialSuccess) {
-            initialSuccess = false;
-            return;
-          }
-
-          fetch();
-        });
+        unsubSource = source.subscribe(fetch);
       }
     } else {
       if (unsubSource) {

@@ -67,6 +67,16 @@ export type StoreRequest<T, U> = {
   lastFetchTime?: Date;
 
   /**
+   * Set the initial data or error state.
+   *
+   * When provided data, it will set the status to 'success'.
+   *
+   * If both are provided, the error will be used.
+   * @param initial Initial data or error state.
+   */
+  setInitial(initial: { data?: T; error?: any }): void;
+
+  /**
    * Will destroy the signals and the fetcher.
    */
   destroy: () => void;
@@ -82,6 +92,13 @@ export type StoreRequestOptions<T, U> = {
   fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>;
 
   /**
+   * Will compare the sourceData with the previous sourceData.
+   *
+   * If the sourceData is different from the previous sourceData, it will fetch the data again.
+   */
+  compare?: (sourceData: U) => any;
+
+  /**
    * Signal source of the data that will trigger to fetch the data.
    */
   source: Signal<U>;
@@ -91,13 +108,4 @@ export type StoreRequestOptions<T, U> = {
    * @default false
    */
   enabled?: boolean;
-
-  /**
-   * Initial data state.
-   */
-  data?: T;
-  /**
-   * Initial error state.
-   */
-  error?: any;
 };
