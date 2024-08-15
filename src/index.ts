@@ -1,8 +1,6 @@
 //
 //
 
-export {
-  storeRequest,
-  type StoreRequest,
-  type StoreRequestOptions,
-} from './StoreRequest';
+export type { StoreRequest, StoreRequestOptions } from './StoreRequestTypes';
+export { storeRequest } from './StoreRequest';
+export { type GLHeraManager, onlineManager, focusManager } from './managers';

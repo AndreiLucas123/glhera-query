@@ -28,6 +28,6 @@ export default defineConfig({
     },
   ],
 
-  fullyParallel: false,
-  workers: 1,
+  // fullyParallel: false,
+  // workers: 1,
 });

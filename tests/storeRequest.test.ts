@@ -12,10 +12,9 @@ test.describe('storeRequest', () => {
   //
   //
 
-  test('When fetch is successful, must return the data', async () => {
+  test('When created with enabled false, it should not be peding and not fetch', async () => {
     const store = storeRequest({
       fetcher: async () => ({ name: 'John' }),
-      source: 1,
     });
 
     expect(store.pending.value).toBe(false);
@@ -25,12 +24,27 @@ test.describe('storeRequest', () => {
 
     await store.fetch();
 
-    expect(store.data.value).toEqual({ name: 'John' });
-
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
+    expect(store.status.value).toBe('idle');
     expect(store.fetchStatus.value).toBe('idle');
+  });
+
+  //
+  //
+
+  test('When enabled is true, should fetch immediately', async () => {
+    const store = storeRequest({
+      fetcher: async () => ({ name: 'John' }),
+      enabled: true,
+      source: 1,
+    });
+
+    expect(store.enabled.value).toBe(true);
+    expect(store.pending.value).toBe(true);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('pending');
+    expect(store.fetchStatus.value).toBe('fetching');
   });
 
   //
@@ -45,51 +59,19 @@ test.describe('storeRequest', () => {
   //
   //
 
-  test('When is fetching, it must be pending', async () => {
-    const store = storeRequest({
-      fetcher: async () => ({ name: 'John' }),
-      source: 1,
-    });
-
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('idle');
-    expect(store.fetchStatus.value).toBe('idle');
-
-    const promise = store.fetch();
-
-    expect(store.pending.value).toBe(true);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('pending');
-    expect(store.fetchStatus.value).toBe('fetching');
-
-    await promise;
-  });
-
-  //
-  //
-
   test('When is throws, must ajust the signals accordingly', async () => {
     const store = storeRequest({
       fetcher: async () => {
         throw new Error('Error fetching data');
       },
-      source: 1,
+      enabled: true,
     });
-
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('idle');
-    expect(store.fetchStatus.value).toBe('idle');
-
-    const promise = store.fetch();
-
-    expect(store.pending.value).toBe(true);
+    -expect(store.pending.value).toBe(true);
     expect(store.error.value).toBe(undefined);
     expect(store.status.value).toBe('pending');
     expect(store.fetchStatus.value).toBe('fetching');
 
-    await promise;
+    await Promise.resolve();
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBeInstanceOf(Error);
@@ -111,36 +93,29 @@ test.describe('storeRequest', () => {
         }
         return { name: 'John' };
       },
-      source: 1,
+      enabled: true,
     });
-
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('idle');
-    expect(store.fetchStatus.value).toBe('idle');
-
-    const promise = store.fetch();
 
     expect(store.pending.value).toBe(true);
     expect(store.error.value).toBe(undefined);
     expect(store.status.value).toBe('pending');
     expect(store.fetchStatus.value).toBe('fetching');
 
-    await promise;
+    await Promise.resolve();
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBeInstanceOf(Error);
     expect(store.status.value).toBe('error');
     expect(store.fetchStatus.value).toBe('idle');
 
-    const promise2 = store.fetch();
+    const promise1 = store.fetch();
 
     expect(store.pending.value).toBe(true);
     expect(store.error.value).toBeInstanceOf(Error);
     expect(store.status.value).toBe('error');
     expect(store.fetchStatus.value).toBe('fetching');
 
-    await promise2;
+    await promise1;
 
     expect(store.data.value).toEqual({ name: 'John' });
     expect(store.pending.value).toBe(false);
@@ -170,7 +145,7 @@ test.describe('storeRequest', () => {
         }
         return { name: 'John', waited };
       },
-      source: 1,
+      enabled: true,
     });
 
     //
@@ -216,6 +191,13 @@ test.describe('storeRequest', () => {
 
     store.source.value = { name: 'Doe' };
 
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('idle');
+    expect(store.fetchStatus.value).toBe('idle');
+
+    store.enabled.value = true;
+
     expect(store.pending.value).toBe(true);
     expect(store.error.value).toBe(undefined);
     expect(store.status.value).toBe('pending');
@@ -224,28 +206,10 @@ test.describe('storeRequest', () => {
     await Promise.resolve();
 
     expect(store.data.value).toEqual({ name: 'Doe' });
-  });
-
-  //
-  //
-
-  test('If the source is undefined, it should not fetch', async () => {
-    let count = 0;
-    const store = storeRequest(async () => ++count);
-
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('idle');
+    expect(store.status.value).toBe('success');
     expect(store.fetchStatus.value).toBe('idle');
-
-    await store.fetch();
-
-    expect(() => store.data.value).toThrowError('Data not fetched yet');
-    store.source.value = 1;
-
-    await Promise.resolve();
-
-    expect(store.data.value).toEqual(1);
   });
 
   //
@@ -253,9 +217,9 @@ test.describe('storeRequest', () => {
 
   test('The fetch date must be set', async () => {
     let count = 0;
-    const store = storeRequest({ fetcher: async () => ++count, source: 1 });
+    const store = storeRequest({ fetcher: async () => ++count, enabled: true });
 
-    await store.fetch();
+    await Promise.resolve();
 
     expect(store.lastFetchTime).toBeInstanceOf(Date);
   });
@@ -267,7 +231,7 @@ test.describe('storeRequest', () => {
     let count = 1;
     const store = storeRequest({
       fetcher: async () => ++count,
-      source: 1,
+      enabled: true,
       data: 1,
     });
 

@@ -74,6 +74,11 @@ export type StoreRequest<T, U> = {
    * Data from the last fetch that executed
    */
   lastFetchTime?: Date;
+
+  /**
+   * Will destroy the signals and the fetcher.
+   */
+  destroy: () => void;
 };
 
 //
@@ -98,6 +103,7 @@ export type StoreRequestOptions<T, U> = {
   error?: any;
   /**
    * Initial enabled state.
+   * @default false
    */
   enabled?: boolean;
 };

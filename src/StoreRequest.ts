@@ -127,15 +127,15 @@ export function storeRequest<T, U>(
 
   const source = signalFactory<U>(opts.source);
 
-  let ignoreSource = true;
-  source.subscribe(() => {
-    if (ignoreSource) {
-      return;
-    }
+  //
+  //
 
-    fetch();
-  });
-  ignoreSource = false;
+  function destroy() {
+    unsub1();
+    unsub2();
+    lastAbortController?.abort();
+    fetcher = null!;
+  }
 
   //
   //
@@ -150,6 +150,7 @@ export function storeRequest<T, U>(
     enabled,
     fetch,
     fetcher,
+    destroy,
   };
 
   //
@@ -169,6 +170,24 @@ export function storeRequest<T, U>(
     status.value = 'error';
     output.lastFetchTime = new Date();
   }
+
+  //
+  //  Subscribe to the source signal
+
+  let ignoreSource = true;
+  const unsub1 = source.subscribe(() => {
+    if (ignoreSource || !enabled.value) {
+      return;
+    }
+
+    fetch();
+  });
+  ignoreSource = false;
+
+  //
+  //  Subscribe to the enabled signal
+
+  const unsub2 = enabled.subscribe(fetch);
 
   //
   //
