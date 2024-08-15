@@ -23,9 +23,6 @@ const notFetchedSymbol = Symbol.for('notFetched');
 //
 
 export function storeRequest<T, U>(
-  fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>,
-): StoreRequest<T, U>;
-export function storeRequest<T, U>(
   opts: StoreRequestOptions<T, U>,
 ): StoreRequest<T, U>;
 
@@ -33,28 +30,27 @@ export function storeRequest<T, U>(
 //
 
 export function storeRequest<T, U>(
-  opts:
-    | ((signal: AbortSignal, sourceData: U) => Promise<T>)
-    | StoreRequestOptions<T, U>,
+  opts: StoreRequestOptions<T, U>,
 ): StoreRequest<T, U> {
   //
   //
 
-  let fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>;
+  let fetcher: (signal: AbortSignal, sourceData: U) => Promise<T> =
+    opts.fetcher;
 
-  if (typeof opts === 'function') {
-    fetcher = opts;
-    opts = { fetcher };
-  } else {
-    fetcher = opts.fetcher;
+  const source = opts.source;
+  let unsubSource: (() => void) | null = null;
 
-    if (!fetcher) {
-      throw new Error('fetcher is required');
-    }
+  if (!fetcher) {
+    throw new Error('fetcher is required');
+  }
 
-    if (opts.data !== undefined && opts.error !== undefined) {
-      throw new Error('data and error cannot be defined at the same time');
-    }
+  if (!source) {
+    throw new Error('source is required');
+  }
+
+  if (opts.data !== undefined && opts.error !== undefined) {
+    throw new Error('data and error cannot be defined at the same time');
   }
 
   //
@@ -125,15 +121,11 @@ export function storeRequest<T, U>(
   //
   //
 
-  const source = signalFactory<U>(opts.source);
-
-  //
-  //
-
   function destroy() {
-    unsub1();
-    unsub2();
+    unsubEnabled();
+    unsubSource?.();
     lastAbortController?.abort();
+    lastAbortController = null;
     fetcher = null!;
   }
 
@@ -146,7 +138,6 @@ export function storeRequest<T, U>(
     error,
     status,
     fetchStatus,
-    source,
     enabled,
     fetch,
     fetcher,
@@ -156,10 +147,15 @@ export function storeRequest<T, U>(
   //
   //
 
+  let initialSuccess = false; // Used to avoid calling fetch when the data is set initially
+
   if (opts.data !== undefined) {
     data.value = opts.data;
     status.value = 'success';
     output.lastFetchTime = new Date();
+    if (enabled.value) {
+      initialSuccess = true;
+    }
   }
 
   //
@@ -172,22 +168,27 @@ export function storeRequest<T, U>(
   }
 
   //
-  //  Subscribe to the source signal
-
-  let ignoreSource = true;
-  const unsub1 = source.subscribe(() => {
-    if (ignoreSource || !enabled.value) {
-      return;
-    }
-
-    fetch();
-  });
-  ignoreSource = false;
-
-  //
   //  Subscribe to the enabled signal
 
-  const unsub2 = enabled.subscribe(fetch);
+  const unsubEnabled = enabled.subscribe((_enabled) => {
+    if (_enabled) {
+      if (!unsubSource) {
+        unsubSource = source.subscribe(() => {
+          if (initialSuccess) {
+            initialSuccess = false;
+            return;
+          }
+
+          fetch();
+        });
+      }
+    } else {
+      if (unsubSource) {
+        unsubSource();
+        unsubSource = null;
+      }
+    }
+  });
 
   //
   //

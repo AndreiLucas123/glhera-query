@@ -46,15 +46,6 @@ export type StoreRequest<T, U> = {
   fetchStatus: Signal<'fetching' | 'idle'>;
 
   /**
-   * Source of the data that will be used to fetch the data.
-   *
-   * This signal will be used to trigger a new fetch when the value changes.
-   *
-   * If the source is undefined, it will not fetch the data.
-   */
-  source: Signal<U | undefined>;
-
-  /**
    * Method called by `StoreRequest.fetch`
    */
   fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>;
@@ -89,21 +80,24 @@ export type StoreRequestOptions<T, U> = {
    * Method that will fetch the data from the server.
    */
   fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>;
+
   /**
-   * Initial data state.
+   * Signal source of the data that will trigger to fetch the data.
    */
-  data?: T;
-  /**
-   * Initial source state.
-   */
-  source?: U;
-  /**
-   * Initial error state.
-   */
-  error?: any;
+  source: Signal<U>;
+
   /**
    * Initial enabled state.
    * @default false
    */
   enabled?: boolean;
+
+  /**
+   * Initial data state.
+   */
+  data?: T;
+  /**
+   * Initial error state.
+   */
+  error?: any;
 };

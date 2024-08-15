@@ -9,12 +9,15 @@ import { storeRequest } from '../src';
 test.describe('storeRequest', () => {
   setSignalFactory(signal);
 
+  const source = signal(1);
+
   //
   //
 
   test('When created with enabled false, it should not be peding and not fetch', async () => {
     const store = storeRequest({
       fetcher: async () => ({ name: 'John' }),
+      source,
     });
 
     expect(store.pending.value).toBe(false);
@@ -37,7 +40,7 @@ test.describe('storeRequest', () => {
     const store = storeRequest({
       fetcher: async () => ({ name: 'John' }),
       enabled: true,
-      source: 1,
+      source,
     });
 
     expect(store.enabled.value).toBe(true);
@@ -51,7 +54,10 @@ test.describe('storeRequest', () => {
   //
 
   test('If try to access data before a fetch, must trow a error', async () => {
-    const store = storeRequest(async () => ({ name: 'John' }));
+    const store = storeRequest({
+      fetcher: async () => ({ name: 'John' }),
+      source,
+    });
 
     expect(() => store.data.value).toThrowError('Data not fetched yet');
   });
@@ -65,6 +71,7 @@ test.describe('storeRequest', () => {
         throw new Error('Error fetching data');
       },
       enabled: true,
+      source,
     });
     -expect(store.pending.value).toBe(true);
     expect(store.error.value).toBe(undefined);
@@ -94,6 +101,7 @@ test.describe('storeRequest', () => {
         return { name: 'John' };
       },
       enabled: true,
+      source,
     });
 
     expect(store.pending.value).toBe(true);
@@ -146,6 +154,7 @@ test.describe('storeRequest', () => {
         return { name: 'John', waited };
       },
       enabled: true,
+      source,
     });
 
     //
@@ -182,14 +191,19 @@ test.describe('storeRequest', () => {
   //
 
   test('When change the source, it must trigger a fetch', async () => {
-    const store = storeRequest(async (signal, sourceData) => sourceData as any);
+    const _source = signal({ name: 'John' });
+
+    const store = storeRequest({
+      fetcher: async (signal, sourceData) => sourceData as any,
+      source: _source,
+    });
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(undefined);
     expect(store.status.value).toBe('idle');
     expect(store.fetchStatus.value).toBe('idle');
 
-    store.source.value = { name: 'Doe' };
+    _source.value = { name: 'Doe' };
 
     expect(store.pending.value).toBe(false);
     expect(store.error.value).toBe(undefined);
@@ -217,7 +231,11 @@ test.describe('storeRequest', () => {
 
   test('The fetch date must be set', async () => {
     let count = 0;
-    const store = storeRequest({ fetcher: async () => ++count, enabled: true });
+    const store = storeRequest({
+      fetcher: async () => ++count,
+      enabled: true,
+      source,
+    });
 
     await Promise.resolve();
 
@@ -227,12 +245,13 @@ test.describe('storeRequest', () => {
   //
   //
 
-  test('When the initialData is set, it must be success', async () => {
+  test('When the initialData is set, it must be success and not fetch enabled', async () => {
     let count = 1;
     const store = storeRequest({
       fetcher: async () => ++count,
       enabled: true,
       data: 1,
+      source,
     });
 
     expect(store.data.value).toEqual(1);
@@ -246,11 +265,45 @@ test.describe('storeRequest', () => {
   //
   //
 
+  test('When the initialData is set, it must be success and must fetch after enabled', async () => {
+    let count = 1;
+    const store = storeRequest({
+      fetcher: async () => ++count,
+      data: 1,
+      source,
+    });
+
+    expect(store.data.value).toEqual(1);
+    expect(store.lastFetchTime).toBeInstanceOf(Date);
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('success');
+    expect(store.fetchStatus.value).toBe('idle');
+
+    store.enabled.value = true;
+
+    expect(store.pending.value).toBe(true);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('success');
+    expect(store.fetchStatus.value).toBe('fetching');
+
+    await Promise.resolve();
+
+    expect(store.data.value).toEqual(2);
+    expect(store.lastFetchTime).toBeInstanceOf(Date);
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('success');
+  });
+
+  //
+  //
+
   test('When the initialError is set, it must be error', async () => {
     let count = 1;
     const store = storeRequest({
       fetcher: async () => ++count,
-      source: 1,
+      source,
       error: 'Some error',
     });
 
@@ -270,7 +323,7 @@ test.describe('storeRequest', () => {
     expect(() => {
       const store = storeRequest({
         fetcher: async () => ++count,
-        source: 1,
+        source,
         data: 1,
         error: 'Some error',
       });
