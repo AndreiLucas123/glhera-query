@@ -29,7 +29,8 @@ Por conta dessas diferenças, para que um app usando **glhera-query** faça gran
 
 - [x] Cancellable fetch (Abort Signal)
 - [ ] Infinite Queries
-- [ ] Scroll Restoration? (Is needed?)
+- [-] Scroll Restoration? (Is needed?)
+  - Lendo o código fonte do `React Query` eu não vi nada a respeito, provavelmente se recarregar o estado da aplicação de maneira sincrona o browser aparentemente já retoma a posição de maneira automática
 - [-] [Retry](https://tanstack.com/query/latest/docs/framework/react/guides/query-retries)
   - Não é necessário em nossos projetos, mas talvez possa fazer algum utilitário que faz retry
 - [ ] [Window Focus Refetching](https://tanstack.com/query/latest/docs/framework/react/guides/window-focus-refetching) Copiar o [focusManager](https://tanstack.com/query/latest/docs/reference/focusManager)?
@@ -42,9 +43,12 @@ Por conta dessas diferenças, para que um app usando **glhera-query** faça gran
 
 - Agora as queries precisam ser `enabled` e quando elas foram `enabled` elas passam a reagir aos `query params` da rota
 - Adicionado `focusManager`, `onlineManager` e um `client` como do `React Query`, mas eles ainda não estão sendo usados pelo `storeRequest`
+  - Por conta de adicionar `onlineManager`, também adicionou-se `fetchStatus: 'paused'`
 - Caso uma query seja `enabled` des do princípio, ela já é criada fazendo `fetch`
 
 A maior diferença entre o **glhera-query** e o **React Query** agora é que o **glhera-query** é **signal based** e ele **invalida** o cache de outros itens da lista, ao invés de ficar guardando diversos itens
+
+- A forma que `onlineManager` funciona é diferente do `React Query`, o `React Query` sempre faz requisição ao voltar ficar online, o **glhera-query** só faz se antes estava no estado `paused`
 
 ### Configurando reatividade (signals)
 

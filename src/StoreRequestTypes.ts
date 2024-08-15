@@ -3,6 +3,14 @@ import type { Signal } from 'signal-factory';
 //
 //
 
+export type InitialStoreRequestData<T> = {
+  data?: T;
+  error?: any;
+};
+
+//
+//
+
 export type StoreRequest<T, U> = {
   /**
    * Signal that indicates if the store is enabled and will fetch the data.
@@ -75,7 +83,7 @@ export type StoreRequest<T, U> = {
    * If both are provided, the error will be used.
    * @param initial Initial data or error state.
    */
-  setInitial(initial: { data?: T; error?: any }): void;
+  setInitial(initial: InitialStoreRequestData<T>): void;
 
   /**
    * Will destroy the signals and the fetcher.

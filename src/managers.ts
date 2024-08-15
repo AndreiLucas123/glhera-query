@@ -85,15 +85,11 @@ export function testingManager(initial: boolean): GLHeraManager {
   const signal = signalFactory<boolean>(initial);
 
   //
+  // @ts-ignore
+  signal.listen = () => () => {};
+
+  //
   //
 
-  return {
-    get value() {
-      return signal.value;
-    },
-    subscribe: signal.subscribe,
-    listen() {
-      return () => {};
-    },
-  };
+  return signal as any;
 }

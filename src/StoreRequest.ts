@@ -1,5 +1,6 @@
 import { Signal, signalFactory } from 'signal-factory';
 import { StoreRequest, StoreRequestOptions } from './StoreRequestTypes';
+import { GLHeraClient } from './glheraClient';
 
 //
 //
@@ -23,13 +24,7 @@ const notFetchedSymbol = Symbol.for('notFetched');
 //
 
 export function storeRequest<T, U>(
-  opts: StoreRequestOptions<T, U>,
-): StoreRequest<T, U>;
-
-//
-//
-
-export function storeRequest<T, U>(
+  client: GLHeraClient,
   opts: StoreRequestOptions<T, U>,
 ): StoreRequest<T, U> {
   //
@@ -44,6 +39,13 @@ export function storeRequest<T, U>(
   let lastCompared: any = null;
 
   let unsubSource: (() => void) | null = null;
+  let unsubEnabled: (() => void) | null = null;
+  let unsubOnline: (() => void) | null = null;
+
+  //
+  //
+
+  const { focusManager, onlineManager } = client;
 
   //
   //
@@ -68,10 +70,8 @@ export function storeRequest<T, U>(
       return;
     }
 
-    const sourceValue = source.value;
-
     if (compare) {
-      const compared = compare(sourceValue);
+      const compared = compare(source.value);
       if (compared === lastCompared) {
         return;
       }
@@ -85,6 +85,26 @@ export function storeRequest<T, U>(
       }
 
       lastCompared = compared;
+    }
+
+    return internalFetch();
+  }
+
+  //
+  //
+
+  /** Does the fatch, but will not compare or check if is enabled */
+  async function internalFetch() {
+    if (onlineManager.value === false) {
+      fetchStatus.value = 'paused';
+      pending.value = true;
+      status.value = 'pending';
+      unsubOnline = onlineManager.subscribe((online) => {
+        if (online) {
+          internalFetch();
+        }
+      });
+      return;
     }
 
     if (lastAbortController) {
@@ -104,7 +124,7 @@ export function storeRequest<T, U>(
 
     try {
       output.lastFetchTime = new Date();
-      const dataFetched = await fetcher(sourceValue, abortController.signal);
+      const dataFetched = await fetcher(source.value, abortController.signal);
 
       if (abortController !== lastAbortController) {
         return;
@@ -133,12 +153,29 @@ export function storeRequest<T, U>(
   //
   //
 
+  function unsubSourceAndOnline() {
+    if (unsubSource) {
+      unsubSource();
+      unsubSource = null;
+    }
+    if (unsubOnline) {
+      unsubOnline();
+      unsubOnline = null;
+    }
+  }
+
+  //
+  //
+
   function destroy() {
-    unsubEnabled();
-    unsubSource?.();
+    unsubEnabled!();
+    unsubEnabled = null;
+
     lastAbortController?.abort();
     lastAbortController = null;
     fetcher = null!;
+
+    unsubSourceAndOnline();
   }
 
   //
@@ -177,16 +214,13 @@ export function storeRequest<T, U>(
   //
   //  Subscribe to the enabled signal
 
-  const unsubEnabled = enabled.subscribe((_enabled) => {
+  unsubEnabled = enabled.subscribe((_enabled) => {
     if (_enabled) {
       if (!unsubSource) {
         unsubSource = source.subscribe(fetch);
       }
     } else {
-      if (unsubSource) {
-        unsubSource();
-        unsubSource = null;
-      }
+      unsubSourceAndOnline();
     }
   });
 

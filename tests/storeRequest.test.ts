@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { setSignalFactory } from 'signal-factory';
 import { signal } from 'signal-factory/vanilla';
-import { storeRequest } from '../src';
+import { glheraClient, storeRequest, testingManager } from '../src';
 
 //
 //
@@ -11,11 +11,16 @@ test.describe('storeRequest', () => {
 
   const source = signal(1);
 
+  const client = glheraClient({
+    focusManager: testingManager(true),
+    onlineManager: testingManager(true),
+  });
+
   //
   //
 
   test('When created with enabled false, it should not be peding and not fetch', async () => {
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async () => ({ name: 'John' }),
       source,
     });
@@ -37,7 +42,7 @@ test.describe('storeRequest', () => {
   //
 
   test('When enabled is true, should fetch immediately', async () => {
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async () => ({ name: 'John' }),
       enabled: true,
       source,
@@ -54,7 +59,7 @@ test.describe('storeRequest', () => {
   //
 
   test('If try to access data before a fetch, must trow a error', async () => {
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async () => ({ name: 'John' }),
       source,
     });
@@ -66,7 +71,7 @@ test.describe('storeRequest', () => {
   //
 
   test('When is throws, must ajust the signals accordingly', async () => {
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async () => {
         throw new Error('Error fetching data');
       },
@@ -92,7 +97,7 @@ test.describe('storeRequest', () => {
   test('When is throws, but tries again must display accordingly', async () => {
     let count = 0;
 
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async () => {
         if (count === 0) {
           count++;
@@ -142,7 +147,7 @@ test.describe('storeRequest', () => {
     //
     //
 
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async (_, signal) => {
         const waited = timeSignal.value;
 
@@ -193,8 +198,8 @@ test.describe('storeRequest', () => {
   test('When change the source, it must trigger a fetch', async () => {
     const _source = signal({ name: 'John' });
 
-    const store = storeRequest({
-      fetcher: async (signal, sourceData) => sourceData as any,
+    const store = storeRequest(client, {
+      fetcher: async (sourceData, signal) => sourceData as any,
       source: _source,
     });
 
@@ -231,7 +236,7 @@ test.describe('storeRequest', () => {
 
   test('The fetch date must be set', async () => {
     let count = 0;
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async () => ++count,
       enabled: true,
       source,
@@ -247,7 +252,7 @@ test.describe('storeRequest', () => {
 
   test('When the initialData is set, it must be success', async () => {
     let count = 1;
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async () => ++count,
       source,
     });
@@ -267,7 +272,7 @@ test.describe('storeRequest', () => {
 
   test('When the initialData is set, it must be success and must fetch after enabled', async () => {
     let count = 1;
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async () => ++count,
       source,
     });
@@ -302,7 +307,7 @@ test.describe('storeRequest', () => {
 
   test('When the initialError is set, it must be error', async () => {
     let count = 1;
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async () => ++count,
       source,
     });
@@ -321,7 +326,7 @@ test.describe('storeRequest', () => {
 
   test('When the initial.data and initial.error is set, it must show error', async () => {
     let count = 1;
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async () => ++count,
       source,
     });
@@ -342,7 +347,7 @@ test.describe('storeRequest', () => {
   test('StoreRequestOptions.compare should avoid fetch', async () => {
     const source = signal({ name: 'John' });
 
-    const store = storeRequest({
+    const store = storeRequest(client, {
       fetcher: async (source) => source,
       source,
       compare: (sourceData) => [sourceData.name],
@@ -411,5 +416,68 @@ test.describe('storeRequest', () => {
     expect(store.status.value).toBe('success');
     expect(store.fetchStatus.value).toBe('idle');
     expect(store.data.value).toEqual({ name: 'Doe' });
+  });
+
+  //
+  //
+
+  test('When online is false, the fetch must be paused', async () => {
+    const client = glheraClient({
+      focusManager: testingManager(true),
+      onlineManager: testingManager(false),
+    });
+
+    const source = signal({ name: 'Jhon' });
+
+    const store = storeRequest(client, {
+      fetcher: async (source) => source,
+      source,
+    });
+
+    //
+    // Initial state must be idle
+
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('idle');
+    expect(store.fetchStatus.value).toBe('idle');
+
+    store.enabled.value = true;
+
+    //
+    // Must be paused
+
+    expect(store.pending.value).toBe(true);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('pending');
+    expect(store.fetchStatus.value).toBe('paused');
+    // Must throw if try to access data
+    expect(() => store.data.value).toThrowError('Data not fetched yet');
+
+    //
+    // Turn online
+
+    client.onlineManager.value = true;
+
+    expect(store.pending.value).toBe(true);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('pending');
+    expect(store.fetchStatus.value).toBe('fetching');
+    // Must throw if try to access data
+    expect(() => store.data.value).toThrowError('Data not fetched yet');
+
+    //
+    // Wait a tick for the fetch promise resolves
+
+    await Promise.resolve();
+
+    //
+    // Must be success
+
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('success');
+    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.data.value).toEqual({ name: 'Jhon' });
   });
 });
