@@ -35,10 +35,14 @@ export function storeRequest<T, U>(
   //
   //
 
-  let fetcher: (signal: AbortSignal, sourceData: U) => Promise<T> =
+  let fetcher: (sourceData: U, signal: AbortSignal) => Promise<T> =
     opts.fetcher;
 
   const source = opts.source;
+
+  const compare = opts.compare;
+  let lastCompared: any = null;
+
   let unsubSource: (() => void) | null = null;
 
   //
@@ -64,6 +68,25 @@ export function storeRequest<T, U>(
       return;
     }
 
+    const sourceValue = source.value;
+
+    if (compare) {
+      const compared = compare(sourceValue);
+      if (compared === lastCompared) {
+        return;
+      }
+
+      if (Array.isArray(compared) && Array.isArray(lastCompared)) {
+        if (compared.length === lastCompared.length) {
+          if (compared.every((v, i) => v === lastCompared[i])) {
+            return;
+          }
+        }
+      }
+
+      lastCompared = compared;
+    }
+
     if (lastAbortController) {
       lastAbortController.abort();
     }
@@ -81,7 +104,7 @@ export function storeRequest<T, U>(
 
     try {
       output.lastFetchTime = new Date();
-      const dataFetched = await fetcher(abortController.signal, source.value);
+      const dataFetched = await fetcher(sourceValue, abortController.signal);
 
       if (abortController !== lastAbortController) {
         return;

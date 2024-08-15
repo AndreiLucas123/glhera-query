@@ -143,7 +143,7 @@ test.describe('storeRequest', () => {
     //
 
     const store = storeRequest({
-      fetcher: async (signal) => {
+      fetcher: async (_, signal) => {
         const waited = timeSignal.value;
 
         await new Promise((resolve) => setTimeout(resolve, waited));
@@ -334,5 +334,82 @@ test.describe('storeRequest', () => {
     expect(store.error.value).toBe('Some error');
     expect(store.status.value).toBe('error');
     expect(store.fetchStatus.value).toBe('idle');
+  });
+
+  //
+  //
+
+  test('StoreRequestOptions.compare should avoid fetch', async () => {
+    const source = signal({ name: 'John' });
+
+    const store = storeRequest({
+      fetcher: async (source) => source,
+      source,
+      compare: (sourceData) => [sourceData.name],
+    });
+
+    //
+    //
+
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('idle');
+    expect(store.fetchStatus.value).toBe('idle');
+
+    //
+    //
+
+    store.enabled.value = true;
+    await Promise.resolve();
+
+    //
+    //
+
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('success');
+    expect(store.fetchStatus.value).toBe('idle');
+
+    //
+    //
+
+    source.value = { name: 'John' };
+
+    //
+    //
+
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('success');
+    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.data.value).toEqual({ name: 'John' });
+
+    //
+    //
+
+    source.value = { name: 'Doe' };
+
+    //
+    //
+
+    expect(store.pending.value).toBe(true);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('success');
+    expect(store.fetchStatus.value).toBe('fetching');
+    expect(store.data.value).toEqual({ name: 'John' });
+
+    //
+    //
+
+    await Promise.resolve();
+
+    //
+    //
+
+    expect(store.pending.value).toBe(false);
+    expect(store.error.value).toBe(undefined);
+    expect(store.status.value).toBe('success');
+    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.data.value).toEqual({ name: 'Doe' });
   });
 });

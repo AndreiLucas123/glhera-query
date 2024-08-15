@@ -49,7 +49,7 @@ export type StoreRequest<T, U> = {
   /**
    * Method called by `StoreRequest.fetch`
    */
-  fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>;
+  fetcher: (sourceData: U, signal: AbortSignal) => Promise<T>;
 
   /**
    * Will cancel the current fetch request if it is pending.
@@ -90,10 +90,12 @@ export type StoreRequestOptions<T, U> = {
   /**
    * Method that will fetch the data from the server.
    */
-  fetcher: (signal: AbortSignal, sourceData: U) => Promise<T>;
+  fetcher: (sourceData: U, signal: AbortSignal) => Promise<T>;
 
   /**
    * Will compare the sourceData with the previous sourceData.
+   *
+   * If compare returns a array, it will compare each element of the array with the previous sourceData like useEffect()
    *
    * If the sourceData is different from the previous sourceData, it will fetch the data again.
    */
