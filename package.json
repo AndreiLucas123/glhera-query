@@ -1,6 +1,6 @@
 {
   "name": "glhera-query",
-  "version": "2.0.0-next.1",
+  "version": "2.0.0-next.2",
   "author": "Simple Organization",
   "scripts": {
     "build": "tsc && rollup -c && node esbuild.mjs",
