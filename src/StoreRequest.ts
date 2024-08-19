@@ -1,11 +1,10 @@
 import { signalFactory } from 'signal-factory';
-import { StoreRequest, StoreRequestOptions } from './StoreRequestTypes';
+import {
+  StoreRequest,
+  StoreRequestOptions,
+  StoreRequestState,
+} from './StoreRequestTypes';
 import { GLHeraClient } from './glheraClient';
-
-//
-//
-
-const notFetchedSymbol = Symbol.for('notFetched');
 
 //
 //
@@ -26,7 +25,6 @@ export function storeRequest<T, U>(
   let lastCompared: any = null;
 
   let unsubSource: (() => void) | null = null;
-  let unsubEnabled: (() => void) | null = null;
   let unsubOnline: (() => void) | null = null;
 
   //
@@ -37,15 +35,25 @@ export function storeRequest<T, U>(
   //
   //
 
-  const enabled = signalFactory<boolean>(opts.enabled ?? false);
-  const data = signalFactory<T>(notFetchedSymbol as any);
-  const pending = signalFactory<boolean>(false);
+  let _internalState: StoreRequestState<T> = {
+    enabled: opts.enabled ?? false,
+    lastFetchTime: new Date(0),
+    pending: false,
+    status: 'idle',
+    fetchStatus: 'idle',
+  };
+
+  //
+  //
+
+  const state = signalFactory<StoreRequestState<T>>(_internalState);
+
+  const set = state.set;
   // @ts-ignore
-  const error = signalFactory<any>();
-  const status = signalFactory<'idle' | 'pending' | 'error' | 'success'>(
-    'idle',
-  );
-  const fetchStatus = signalFactory<'fetching' | 'paused' | 'idle'>('idle');
+  delete state.set;
+
+  //
+  //
 
   let lastAbortController: AbortController | null = null;
 
@@ -53,7 +61,7 @@ export function storeRequest<T, U>(
   //
 
   async function fetch(): Promise<void> {
-    if (!enabled.get()) {
+    if (!_internalState.enabled) {
       return;
     }
 
@@ -80,12 +88,26 @@ export function storeRequest<T, U>(
   //
   //
 
+  function updateState(newState: Partial<StoreRequestState<T>>) {
+    _internalState = {
+      ..._internalState,
+      ...newState,
+    };
+    set(_internalState);
+  }
+
+  //
+  //
+
   /** Does the fatch, but will not compare or check if is enabled */
   async function internalFetch() {
     if (onlineManager.get() === false) {
-      fetchStatus.set('paused');
-      pending.set(true);
-      status.set('pending');
+      updateState({
+        fetchStatus: 'paused',
+        pending: true,
+        status: 'pending',
+      });
+
       unsubOnline = onlineManager.subscribe((online) => {
         if (online) {
           internalFetch();
@@ -101,39 +123,51 @@ export function storeRequest<T, U>(
     const abortController = new AbortController();
     lastAbortController = abortController;
 
-    fetchStatus.set('fetching');
-    pending.set(true);
+    updateState({
+      fetchStatus: 'fetching',
+      pending: true,
+    });
 
     // Only update the status if it is idle
-    if (status.get() === 'idle') {
-      status.set('pending');
+    if (_internalState.status === 'idle') {
+      updateState({
+        status: 'pending',
+      });
     }
 
     try {
-      output.lastFetchTime = new Date();
+      updateState({
+        lastFetchTime: new Date(),
+      });
       const dataFetched = await fetcher(source.get(), abortController.signal);
 
       if (abortController !== lastAbortController) {
         return;
       }
 
-      data.set(dataFetched);
-      error.set(undefined);
-      status.set('success');
+      updateState({
+        data: dataFetched,
+        error: undefined,
+        status: 'success',
+      });
     } catch (err) {
       if (abortController !== lastAbortController) {
         return;
       }
 
-      error.set(err);
-      status.set('error');
+      updateState({
+        error: err,
+        status: 'error',
+      });
     } finally {
       if (abortController !== lastAbortController) {
         return;
       }
 
-      fetchStatus.set('idle');
-      pending.set(false);
+      updateState({
+        fetchStatus: 'idle',
+        pending: false,
+      });
     }
   }
 
@@ -155,9 +189,6 @@ export function storeRequest<T, U>(
   //
 
   function destroy() {
-    unsubEnabled!();
-    unsubEnabled = null;
-
     lastAbortController?.abort();
     lastAbortController = null;
     fetcher = null!;
@@ -169,60 +200,56 @@ export function storeRequest<T, U>(
   //
 
   function setInitial(initial: { data?: T; error?: any }) {
-    output.lastFetchTime = new Date();
+    updateState({
+      lastFetchTime: new Date(),
+    });
 
     if (initial.data !== undefined) {
-      data.set(initial.data);
-      status.set('success');
+      updateState({
+        data: initial.data,
+        status: 'success',
+      });
     }
 
     if (initial.error !== undefined) {
-      error.set(initial.error);
-      status.set('error');
+      updateState({
+        error: initial.error,
+        status: 'error',
+      });
     }
   }
 
   //
   //
 
-  const oldDataGet = data.get;
-
-  data.get = () => {
-    if (oldDataGet() === notFetchedSymbol) {
-      throw new Error('Data not fetched yet');
-    }
-
-    return oldDataGet();
-  };
-
-  //
-  //
-
   const output: StoreRequest<T, U> = {
-    data,
-    pending,
-    error,
-    status,
-    fetchStatus,
-    enabled,
+    get: state.get,
+    subscribe: state.subscribe,
     fetch,
     fetcher,
     setInitial,
+    enable(value) {
+      if (_internalState.enabled === value) {
+        return;
+      }
+
+      updateState({
+        enabled: value,
+      });
+
+      if (value) {
+        fetch();
+      }
+    },
     destroy,
   };
 
   //
-  //  Subscribe to the enabled signal
+  //
 
-  unsubEnabled = enabled.subscribe((_enabled) => {
-    if (_enabled) {
-      if (!unsubSource) {
-        unsubSource = source.subscribe(fetch);
-      }
-    } else {
-      unsubSourceAndOnline();
-    }
-  });
+  if (opts.enabled) {
+    fetch();
+  }
 
   //
   //

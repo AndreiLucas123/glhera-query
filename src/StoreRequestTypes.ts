@@ -1,4 +1,4 @@
-import type { WritableSignal } from 'signal-factory';
+import type { ReadableSignal } from 'signal-factory';
 
 //
 //
@@ -11,49 +11,53 @@ export type InitialStoreRequestData<T> = {
 //
 //
 
-export type StoreRequest<T, U> = {
+export type StoreRequestState<T> = {
   /**
-   * Signal that indicates if the store is enabled and will fetch the data.
+   * Indicates if the store is enabled and will fetch the data.
    */
-  enabled: WritableSignal<any>;
-
+  enabled: boolean;
   /**
-   * Signal that indicates the data fetched from the server.
-   *
-   * If tried to access the value before the data is fetched, it will throw an error.
+   * Indicates the data fetched from the server.
    */
-  data: WritableSignal<T>;
-
+  data?: T;
   /**
-   * Signal that indicates if the status === 'pending'
+   * Indicates if the status === 'pending'
    */
-  pending: WritableSignal<boolean>;
-
+  pending: boolean;
   /**
-   * Signal that indicates the error that occurred while fetching the data.
+   * Indicates the error that occurred while fetching the data.
    */
-  error: WritableSignal<any>;
-
+  error?: any;
   /**
-   * Signal that indicates the status of the data
+   * indicates the status of the data
    *
    * - `idle` - The data has not been fetched yet and is not being fetched.
    * - `pending` - The data is being fetched. (Useful for loading spinners or skeletons)
    * - `error` - An error occurred while fetching the data.
    * - `success` - The data was fetched successfully.
    */
-  status: WritableSignal<'idle' | 'pending' | 'error' | 'success'>;
-
+  status: 'idle' | 'pending' | 'error' | 'success';
   /**
-   * Signal that indicates if the data is being fetched.
+   * Indicates if the data is being fetched.
    * (Useful for changing the opacity of the data being displayed, or displaying a loading spinner without blocking the UI)
    *
    * - `idle` - The data is not being fetched.
    * - `paused` - The data is not being being fetched because the network (onlineManager) when tried fetch was offline.
    * - `fetching` - The data is being fetched.
    */
-  fetchStatus: WritableSignal<'fetching' | 'paused' | 'idle'>;
+  fetchStatus: 'fetching' | 'paused' | 'idle';
 
+  /**
+   * Data from the last fetch that executed
+   */
+  lastFetchTime?: Date;
+};
+
+//
+//
+
+export interface StoreRequest<T, U>
+  extends ReadableSignal<StoreRequestState<T>> {
   /**
    * Method called by `StoreRequest.fetch`
    */
@@ -71,11 +75,6 @@ export type StoreRequest<T, U> = {
   fetch: () => Promise<void>;
 
   /**
-   * Data from the last fetch that executed
-   */
-  lastFetchTime?: Date;
-
-  /**
    * Set the initial data or error state.
    *
    * When provided data, it will set the status to 'success'.
@@ -86,10 +85,16 @@ export type StoreRequest<T, U> = {
   setInitial(initial: InitialStoreRequestData<T>): void;
 
   /**
+   * Will enable or disable the store.
+   * @param value If true, it will enable the store and fetch the data.
+   */
+  enable: (value: boolean) => void;
+
+  /**
    * Will destroy the signals and the fetcher.
    */
   destroy: () => void;
-};
+}
 
 //
 //
@@ -112,7 +117,7 @@ export type StoreRequestOptions<T, U> = {
   /**
    * Signal source of the data that will trigger to fetch the data.
    */
-  source: WritableSignal<U>;
+  source: ReadableSignal<U>;
 
   /**
    * Initial enabled state.
