@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { setSignalFactory } from 'signal-factory';
-import { signal } from 'signal-factory/vanilla';
+import { atom } from 'signal-factory';
 import { glheraClient, storeRequest, testingManager } from '../src';
 
 //
 //
 
 test.describe('storeRequest', () => {
-  setSignalFactory(signal);
+  setSignalFactory(atom);
 
-  const source = signal(1);
+  const source = atom(1);
 
   const client = glheraClient({
     focusManager: testingManager(true),
@@ -142,7 +142,7 @@ test.describe('storeRequest', () => {
 
   test('Should cancel the fetch accordingly', async () => {
     let aborted = false;
-    const timeSignal = signal(300);
+    const timeSignal = atom(300);
 
     //
     //
@@ -196,7 +196,7 @@ test.describe('storeRequest', () => {
   //
 
   test('When change the source, it must trigger a fetch', async () => {
-    const _source = signal({ name: 'John' });
+    const _source = atom({ name: 'John' });
 
     const store = storeRequest(client, {
       fetcher: async (sourceData, signal) => sourceData as any,
@@ -345,7 +345,7 @@ test.describe('storeRequest', () => {
   //
 
   test('StoreRequestOptions.compare should avoid fetch', async () => {
-    const source = signal({ name: 'John' });
+    const source = atom({ name: 'John' });
 
     const store = storeRequest(client, {
       fetcher: async (source) => source,
@@ -427,7 +427,7 @@ test.describe('storeRequest', () => {
       onlineManager: testingManager(false),
     });
 
-    const source = signal({ name: 'Jhon' });
+    const source = atom({ name: 'Jhon' });
 
     const store = storeRequest(client, {
       fetcher: async (source) => source,
