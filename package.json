@@ -31,6 +31,6 @@
   "type": "module",
   "packageManager": "pnpm@9.6.0",
   "dependencies": {
-    "signal-factory": ">=1.0.0-next.2"
+    "signal-factory": "1.0.0-next.4"
   }
 }

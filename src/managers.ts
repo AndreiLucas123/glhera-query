@@ -1,24 +1,15 @@
-import { signalFactory } from 'signal-factory';
+import { ReadableSignal, signalFactory } from 'signal-factory';
 
 /**
  * A manager that handles the focus and online state of the browser.
  */
-export type GLHeraManager = {
-  /**
-   * The current value of the signal.
-   */
-  value: boolean;
-  /**
-   * Subscribes to the signal.
-   * @returns A function to unsubscribe from the signal.
-   */
-  subscribe: (callback: (value: boolean) => void) => () => void;
+export interface GLHeraManager extends ReadableSignal<boolean> {
   /**
    * Listens to changes in the signal.
    * @returns A function to stop listening to changes.
    */
   listen: () => () => void;
-};
+}
 
 /**
  * Manages the focus state of the browser.
@@ -36,12 +27,12 @@ export function focusManager(): GLHeraManager {
   //
 
   return {
-    get value() {
-      return isFocused.value;
+    get() {
+      return isFocused.get();
     },
     subscribe: isFocused.subscribe,
     listen() {
-      const listener = () => (isFocused.value = getVisibilityState());
+      const listener = () => isFocused.set(getVisibilityState());
 
       window.addEventListener('visibilitychange', listener, false);
       return () => window.removeEventListener('visibilitychange', listener);
@@ -59,12 +50,12 @@ export function onlineManager(): GLHeraManager {
   //
 
   return {
-    get value() {
-      return isOnline.value;
+    get() {
+      return isOnline.get();
     },
     subscribe: isOnline.subscribe,
     listen() {
-      const listenerOn = () => (isOnline.value = true);
+      const listenerOn = () => isOnline.set(true);
 
       window.addEventListener('online', listenerOn, false);
       window.addEventListener('offline', listenerOn, false);

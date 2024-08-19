@@ -1,19 +1,6 @@
-import { Signal, signalFactory } from 'signal-factory';
+import { signalFactory } from 'signal-factory';
 import { StoreRequest, StoreRequestOptions } from './StoreRequestTypes';
 import { GLHeraClient } from './glheraClient';
-
-//
-//
-const dataProxyHandler: ProxyHandler<Signal> = {
-  get(target, property, receiver) {
-    if (property === 'value') {
-      if (target.value === notFetchedSymbol) {
-        throw new Error('Data not fetched yet');
-      }
-    }
-    return Reflect.get(target, property, receiver);
-  },
-};
 
 //
 //
@@ -51,7 +38,7 @@ export function storeRequest<T, U>(
   //
 
   const enabled = signalFactory<boolean>(opts.enabled ?? false);
-  const data = signalFactory<T>(notFetchedSymbol);
+  const data = signalFactory<T>(notFetchedSymbol as any);
   const pending = signalFactory<boolean>(false);
   // @ts-ignore
   const error = signalFactory<any>();
@@ -66,12 +53,12 @@ export function storeRequest<T, U>(
   //
 
   async function fetch(): Promise<void> {
-    if (!enabled.value) {
+    if (!enabled.get()) {
       return;
     }
 
     if (compare) {
-      const compared = compare(source.value);
+      const compared = compare(source.get());
       if (compared === lastCompared) {
         return;
       }
@@ -95,10 +82,10 @@ export function storeRequest<T, U>(
 
   /** Does the fatch, but will not compare or check if is enabled */
   async function internalFetch() {
-    if (onlineManager.value === false) {
-      fetchStatus.value = 'paused';
-      pending.value = true;
-      status.value = 'pending';
+    if (onlineManager.get() === false) {
+      fetchStatus.set('paused');
+      pending.set(true);
+      status.set('pending');
       unsubOnline = onlineManager.subscribe((online) => {
         if (online) {
           internalFetch();
@@ -114,39 +101,39 @@ export function storeRequest<T, U>(
     const abortController = new AbortController();
     lastAbortController = abortController;
 
-    fetchStatus.value = 'fetching';
-    pending.value = true;
+    fetchStatus.set('fetching');
+    pending.set(true);
 
     // Only update the status if it is idle
-    if (status.value === 'idle') {
-      status.value = 'pending';
+    if (status.get() === 'idle') {
+      status.set('pending');
     }
 
     try {
       output.lastFetchTime = new Date();
-      const dataFetched = await fetcher(source.value, abortController.signal);
+      const dataFetched = await fetcher(source.get(), abortController.signal);
 
       if (abortController !== lastAbortController) {
         return;
       }
 
-      data.value = dataFetched;
-      error.value = undefined;
-      status.value = 'success';
+      data.set(dataFetched);
+      error.set(undefined);
+      status.set('success');
     } catch (err) {
       if (abortController !== lastAbortController) {
         return;
       }
 
-      error.value = err;
-      status.value = 'error';
+      error.set(err);
+      status.set('error');
     } finally {
       if (abortController !== lastAbortController) {
         return;
       }
 
-      fetchStatus.value = 'idle';
-      pending.value = false;
+      fetchStatus.set('idle');
+      pending.set(false);
     }
   }
 
@@ -185,21 +172,34 @@ export function storeRequest<T, U>(
     output.lastFetchTime = new Date();
 
     if (initial.data !== undefined) {
-      data.value = initial.data;
-      status.value = 'success';
+      data.set(initial.data);
+      status.set('success');
     }
 
     if (initial.error !== undefined) {
-      error.value = initial.error;
-      status.value = 'error';
+      error.set(initial.error);
+      status.set('error');
     }
   }
 
   //
   //
 
+  const oldDataGet = data.get;
+
+  data.get = () => {
+    if (oldDataGet() === notFetchedSymbol) {
+      throw new Error('Data not fetched yet');
+    }
+
+    return oldDataGet();
+  };
+
+  //
+  //
+
   const output: StoreRequest<T, U> = {
-    data: new Proxy(data, dataProxyHandler),
+    data,
     pending,
     error,
     status,

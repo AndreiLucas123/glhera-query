@@ -1,4 +1,4 @@
-import type { Signal } from 'signal-factory';
+import type { WritableSignal } from 'signal-factory';
 
 //
 //
@@ -15,24 +15,24 @@ export type StoreRequest<T, U> = {
   /**
    * Signal that indicates if the store is enabled and will fetch the data.
    */
-  enabled: Signal<any>;
+  enabled: WritableSignal<any>;
 
   /**
    * Signal that indicates the data fetched from the server.
    *
    * If tried to access the value before the data is fetched, it will throw an error.
    */
-  data: Signal<T>;
+  data: WritableSignal<T>;
 
   /**
    * Signal that indicates if the status === 'pending'
    */
-  pending: Signal<boolean>;
+  pending: WritableSignal<boolean>;
 
   /**
    * Signal that indicates the error that occurred while fetching the data.
    */
-  error: Signal<any>;
+  error: WritableSignal<any>;
 
   /**
    * Signal that indicates the status of the data
@@ -42,7 +42,7 @@ export type StoreRequest<T, U> = {
    * - `error` - An error occurred while fetching the data.
    * - `success` - The data was fetched successfully.
    */
-  status: Signal<'idle' | 'pending' | 'error' | 'success'>;
+  status: WritableSignal<'idle' | 'pending' | 'error' | 'success'>;
 
   /**
    * Signal that indicates if the data is being fetched.
@@ -52,7 +52,7 @@ export type StoreRequest<T, U> = {
    * - `paused` - The data is not being being fetched because the network (onlineManager) when tried fetch was offline.
    * - `fetching` - The data is being fetched.
    */
-  fetchStatus: Signal<'fetching' | 'paused' | 'idle'>;
+  fetchStatus: WritableSignal<'fetching' | 'paused' | 'idle'>;
 
   /**
    * Method called by `StoreRequest.fetch`
@@ -112,7 +112,7 @@ export type StoreRequestOptions<T, U> = {
   /**
    * Signal source of the data that will trigger to fetch the data.
    */
-  source: Signal<U>;
+  source: WritableSignal<U>;
 
   /**
    * Initial enabled state.

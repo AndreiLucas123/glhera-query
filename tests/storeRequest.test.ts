@@ -25,17 +25,17 @@ test.describe('storeRequest', () => {
       source,
     });
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('idle');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('idle');
+    expect(store.fetchStatus.get()).toBe('idle');
 
     await store.fetch();
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('idle');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('idle');
+    expect(store.fetchStatus.get()).toBe('idle');
   });
 
   //
@@ -48,11 +48,11 @@ test.describe('storeRequest', () => {
       source,
     });
 
-    expect(store.enabled.value).toBe(true);
-    expect(store.pending.value).toBe(true);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('pending');
-    expect(store.fetchStatus.value).toBe('fetching');
+    expect(store.enabled.get()).toBe(true);
+    expect(store.pending.get()).toBe(true);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('pending');
+    expect(store.fetchStatus.get()).toBe('fetching');
   });
 
   //
@@ -64,7 +64,7 @@ test.describe('storeRequest', () => {
       source,
     });
 
-    expect(() => store.data.value).toThrowError('Data not fetched yet');
+    expect(() => store.data.get()).toThrowError('Data not fetched yet');
   });
 
   //
@@ -78,17 +78,17 @@ test.describe('storeRequest', () => {
       enabled: true,
       source,
     });
-    -expect(store.pending.value).toBe(true);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('pending');
-    expect(store.fetchStatus.value).toBe('fetching');
+    -expect(store.pending.get()).toBe(true);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('pending');
+    expect(store.fetchStatus.get()).toBe('fetching');
 
     await Promise.resolve();
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBeInstanceOf(Error);
-    expect(store.status.value).toBe('error');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBeInstanceOf(Error);
+    expect(store.status.get()).toBe('error');
+    expect(store.fetchStatus.get()).toBe('idle');
   });
 
   //
@@ -109,32 +109,32 @@ test.describe('storeRequest', () => {
       source,
     });
 
-    expect(store.pending.value).toBe(true);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('pending');
-    expect(store.fetchStatus.value).toBe('fetching');
+    expect(store.pending.get()).toBe(true);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('pending');
+    expect(store.fetchStatus.get()).toBe('fetching');
 
     await Promise.resolve();
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBeInstanceOf(Error);
-    expect(store.status.value).toBe('error');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBeInstanceOf(Error);
+    expect(store.status.get()).toBe('error');
+    expect(store.fetchStatus.get()).toBe('idle');
 
     const promise1 = store.fetch();
 
-    expect(store.pending.value).toBe(true);
-    expect(store.error.value).toBeInstanceOf(Error);
-    expect(store.status.value).toBe('error');
-    expect(store.fetchStatus.value).toBe('fetching');
+    expect(store.pending.get()).toBe(true);
+    expect(store.error.get()).toBeInstanceOf(Error);
+    expect(store.status.get()).toBe('error');
+    expect(store.fetchStatus.get()).toBe('fetching');
 
     await promise1;
 
-    expect(store.data.value).toEqual({ name: 'John' });
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.data.get()).toEqual({ name: 'John' });
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('idle');
   });
 
   //
@@ -149,7 +149,7 @@ test.describe('storeRequest', () => {
 
     const store = storeRequest(client, {
       fetcher: async (_, signal) => {
-        const waited = timeSignal.value;
+        const waited = timeSignal.get();
 
         await new Promise((resolve) => setTimeout(resolve, waited));
 
@@ -171,7 +171,7 @@ test.describe('storeRequest', () => {
 
     expect(aborted).toBe(false);
 
-    timeSignal.value = 100;
+    timeSignal.set(100);
 
     const promise2 = store.fetch();
 
@@ -179,17 +179,17 @@ test.describe('storeRequest', () => {
 
     expect(aborted).toBe(false);
 
-    expect(store.data.value).toEqual({ name: 'John', waited: 100 });
+    expect(store.data.get()).toEqual({ name: 'John', waited: 100 });
 
     await promise1;
 
     expect(aborted).toBe(true);
 
-    expect(store.data.value).toEqual({ name: 'John', waited: 100 });
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.data.get()).toEqual({ name: 'John', waited: 100 });
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('idle');
   });
 
   //
@@ -203,32 +203,32 @@ test.describe('storeRequest', () => {
       source: _source,
     });
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('idle');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('idle');
+    expect(store.fetchStatus.get()).toBe('idle');
 
-    _source.value = { name: 'Doe' };
+    _source.set({ name: 'Doe' });
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('idle');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('idle');
+    expect(store.fetchStatus.get()).toBe('idle');
 
-    store.enabled.value = true;
+    store.enabled.set(true);
 
-    expect(store.pending.value).toBe(true);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('pending');
-    expect(store.fetchStatus.value).toBe('fetching');
+    expect(store.pending.get()).toBe(true);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('pending');
+    expect(store.fetchStatus.get()).toBe('fetching');
 
     await Promise.resolve();
 
-    expect(store.data.value).toEqual({ name: 'Doe' });
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.data.get()).toEqual({ name: 'Doe' });
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('idle');
   });
 
   //
@@ -259,12 +259,12 @@ test.describe('storeRequest', () => {
 
     store.setInitial({ data: 1 });
 
-    expect(store.data.value).toEqual(1);
+    expect(store.data.get()).toEqual(1);
     expect(store.lastFetchTime).toBeInstanceOf(Date);
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('idle');
   });
 
   //
@@ -279,27 +279,27 @@ test.describe('storeRequest', () => {
 
     store.setInitial({ data: 1 });
 
-    expect(store.data.value).toEqual(1);
+    expect(store.data.get()).toEqual(1);
     expect(store.lastFetchTime).toBeInstanceOf(Date);
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('idle');
 
-    store.enabled.value = true;
+    store.enabled.set(true);
 
-    expect(store.pending.value).toBe(true);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('fetching');
+    expect(store.pending.get()).toBe(true);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('fetching');
 
     await Promise.resolve();
 
-    expect(store.data.value).toEqual(2);
+    expect(store.data.get()).toEqual(2);
     expect(store.lastFetchTime).toBeInstanceOf(Date);
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
   });
 
   //
@@ -315,10 +315,10 @@ test.describe('storeRequest', () => {
     store.setInitial({ error: 'Some error' });
 
     expect(store.lastFetchTime).toBeInstanceOf(Date);
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe('Some error');
-    expect(store.status.value).toBe('error');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe('Some error');
+    expect(store.status.get()).toBe('error');
+    expect(store.fetchStatus.get()).toBe('idle');
   });
 
   //
@@ -333,12 +333,12 @@ test.describe('storeRequest', () => {
 
     store.setInitial({ data: 1, error: 'Some error' });
 
-    expect(store.data.value).toEqual(1);
+    expect(store.data.get()).toEqual(1);
     expect(store.lastFetchTime).toBeInstanceOf(Date);
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe('Some error');
-    expect(store.status.value).toBe('error');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe('Some error');
+    expect(store.status.get()).toBe('error');
+    expect(store.fetchStatus.get()).toBe('idle');
   });
 
   //
@@ -356,52 +356,52 @@ test.describe('storeRequest', () => {
     //
     //
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('idle');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('idle');
+    expect(store.fetchStatus.get()).toBe('idle');
 
     //
     //
 
-    store.enabled.value = true;
+    store.enabled.set(true);
     await Promise.resolve();
 
     //
     //
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('idle');
 
     //
     //
 
-    source.value = { name: 'John' };
+    source.set({ name: 'John' });
 
     //
     //
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('idle');
-    expect(store.data.value).toEqual({ name: 'John' });
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('idle');
+    expect(store.data.get()).toEqual({ name: 'John' });
 
     //
     //
 
-    source.value = { name: 'Doe' };
+    source.set({ name: 'Doe' });
 
     //
     //
 
-    expect(store.pending.value).toBe(true);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('fetching');
-    expect(store.data.value).toEqual({ name: 'John' });
+    expect(store.pending.get()).toBe(true);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('fetching');
+    expect(store.data.get()).toEqual({ name: 'John' });
 
     //
     //
@@ -411,11 +411,11 @@ test.describe('storeRequest', () => {
     //
     //
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('idle');
-    expect(store.data.value).toEqual({ name: 'Doe' });
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('idle');
+    expect(store.data.get()).toEqual({ name: 'Doe' });
   });
 
   //
@@ -437,34 +437,35 @@ test.describe('storeRequest', () => {
     //
     // Initial state must be idle
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('idle');
-    expect(store.fetchStatus.value).toBe('idle');
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('idle');
+    expect(store.fetchStatus.get()).toBe('idle');
 
-    store.enabled.value = true;
+    store.enabled.set(true);
 
     //
     // Must be paused
 
-    expect(store.pending.value).toBe(true);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('pending');
-    expect(store.fetchStatus.value).toBe('paused');
+    expect(store.pending.get()).toBe(true);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('pending');
+    expect(store.fetchStatus.get()).toBe('paused');
     // Must throw if try to access data
-    expect(() => store.data.value).toThrowError('Data not fetched yet');
+    expect(() => store.data.get()).toThrowError('Data not fetched yet');
 
     //
     // Turn online
 
-    client.onlineManager.value = true;
+    // @ts-ignore Testing has set
+    client.onlineManager.set(true);
 
-    expect(store.pending.value).toBe(true);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('pending');
-    expect(store.fetchStatus.value).toBe('fetching');
+    expect(store.pending.get()).toBe(true);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('pending');
+    expect(store.fetchStatus.get()).toBe('fetching');
     // Must throw if try to access data
-    expect(() => store.data.value).toThrowError('Data not fetched yet');
+    expect(() => store.data.get()).toThrowError('Data not fetched yet');
 
     //
     // Wait a tick for the fetch promise resolves
@@ -474,10 +475,10 @@ test.describe('storeRequest', () => {
     //
     // Must be success
 
-    expect(store.pending.value).toBe(false);
-    expect(store.error.value).toBe(undefined);
-    expect(store.status.value).toBe('success');
-    expect(store.fetchStatus.value).toBe('idle');
-    expect(store.data.value).toEqual({ name: 'Jhon' });
+    expect(store.pending.get()).toBe(false);
+    expect(store.error.get()).toBe(undefined);
+    expect(store.status.get()).toBe('success');
+    expect(store.fetchStatus.get()).toBe('idle');
+    expect(store.data.get()).toEqual({ name: 'Jhon' });
   });
 });
