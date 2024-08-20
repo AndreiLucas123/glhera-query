@@ -304,8 +304,6 @@ test.describe('storeRequest', () => {
 
     _source.set({ name: 'Doe' });
 
-    console.log(_source.get());
-
     expectState(store, {
       enabled: true,
       pending: true,

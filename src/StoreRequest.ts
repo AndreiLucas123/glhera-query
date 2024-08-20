@@ -110,6 +110,7 @@ export function storeRequest<T, U>(
 
       unsubOnline = onlineManager.subscribe((online) => {
         if (online) {
+          unsubOnline!();
           internalFetch();
         }
       });
@@ -124,21 +125,14 @@ export function storeRequest<T, U>(
     lastAbortController = abortController;
 
     updateState({
+      status:
+        _internalState.status === 'idle' ? 'pending' : _internalState.status,
       fetchStatus: 'fetching',
       pending: true,
+      lastFetchTime: new Date(),
     });
 
-    // Only update the status if it is idle
-    if (_internalState.status === 'idle') {
-      updateState({
-        status: 'pending',
-      });
-    }
-
     try {
-      updateState({
-        lastFetchTime: new Date(),
-      });
       const dataFetched = await fetcher(source.get(), abortController.signal);
 
       if (abortController !== lastAbortController) {
@@ -147,8 +141,10 @@ export function storeRequest<T, U>(
 
       updateState({
         data: dataFetched,
-        error: undefined,
         status: 'success',
+        fetchStatus: 'idle',
+        pending: false,
+        error: undefined,
       });
     } catch (err) {
       if (abortController !== lastAbortController) {
@@ -158,13 +154,6 @@ export function storeRequest<T, U>(
       updateState({
         error: err,
         status: 'error',
-      });
-    } finally {
-      if (abortController !== lastAbortController) {
-        return;
-      }
-
-      updateState({
         fetchStatus: 'idle',
         pending: false,
       });
