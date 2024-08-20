@@ -67,13 +67,13 @@ export function storeRequest<T, U>(
 
     if (compare) {
       const compared = compare(source.get());
-      if (compared === lastCompared) {
+      if (Object.is(compared, lastCompared)) {
         return;
       }
 
       if (Array.isArray(compared) && Array.isArray(lastCompared)) {
         if (compared.length === lastCompared.length) {
-          if (compared.every((v, i) => v === lastCompared[i])) {
+          if (compared.every((v, i) => Object.is(v, lastCompared[i]))) {
             return;
           }
         }
@@ -247,9 +247,11 @@ export function storeRequest<T, U>(
   //
   //
 
-  if (opts.enabled) {
-    fetch();
-  }
+  unsubSource = source.subscribe(() => {
+    if (_internalState.enabled) {
+      fetch();
+    }
+  });
 
   //
   //

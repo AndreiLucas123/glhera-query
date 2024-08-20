@@ -275,6 +275,60 @@ test.describe('storeRequest', () => {
   //
   //
 
+  test('When change the source, it must trigger a fetch when enabled', async () => {
+    const _source = atom({ name: 'John' });
+
+    const store = storeRequest(client, {
+      fetcher: async (sourceData, signal) => sourceData as any,
+      source: _source,
+    });
+
+    store.enable(true);
+
+    expectState(store, {
+      enabled: true,
+      pending: true,
+      status: 'pending',
+      fetchStatus: 'fetching',
+    });
+
+    await Promise.resolve();
+
+    expectState(store, {
+      enabled: true,
+      pending: false,
+      status: 'success',
+      fetchStatus: 'idle',
+      data: { name: 'John' },
+    });
+
+    _source.set({ name: 'Doe' });
+
+    console.log(_source.get());
+
+    expectState(store, {
+      enabled: true,
+      pending: true,
+      error: undefined,
+      status: 'success',
+      fetchStatus: 'fetching',
+      data: { name: 'John' },
+    });
+
+    await Promise.resolve();
+
+    expectState(store, {
+      enabled: true,
+      pending: false,
+      status: 'success',
+      fetchStatus: 'idle',
+      data: { name: 'Doe' },
+    });
+  });
+
+  //
+  //
+
   test('The fetch date must be set', async () => {
     let count = 0;
     const store = storeRequest(client, {
