@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { setSignalFactory } from 'signal-factory';
-import { atom } from 'signal-factory';
+import { store } from 'signal-factory/store';
 import { glheraClient, storeRequest, testingManager } from '../src';
 import type { StoreRequestState } from '../src/StoreRequestTypes';
 
@@ -8,9 +8,9 @@ import type { StoreRequestState } from '../src/StoreRequestTypes';
 //
 
 test.describe('storeRequest', () => {
-  setSignalFactory(atom);
+  setSignalFactory(store);
 
-  const source = atom(1);
+  const source = store(1);
 
   const client = glheraClient({
     focusManager: testingManager(true),
@@ -173,12 +173,12 @@ test.describe('storeRequest', () => {
 
   test('Should cancel the fetch accordingly', async () => {
     let aborted = false;
-    const timeSignal = atom(300);
+    const timeSignal = store(300);
 
     //
     //
 
-    const store = storeRequest(client, {
+    const _store = storeRequest(client, {
       fetcher: async (_, signal) => {
         const waited = timeSignal.get();
 
@@ -198,25 +198,25 @@ test.describe('storeRequest', () => {
 
     expect(aborted).toBe(false);
 
-    const promise1 = store.fetch();
+    const promise1 = _store.fetch();
 
     expect(aborted).toBe(false);
 
     timeSignal.set(100);
 
-    const promise2 = store.fetch();
+    const promise2 = _store.fetch();
 
     await promise2;
 
     expect(aborted).toBe(false);
 
-    expect(store.get().data).toEqual({ name: 'John', waited: 100 });
+    expect(_store.get().data).toEqual({ name: 'John', waited: 100 });
 
     await promise1;
 
     expect(aborted).toBe(true);
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: false,
       status: 'success',
@@ -229,14 +229,14 @@ test.describe('storeRequest', () => {
   //
 
   test('When change the source, it must not trigger a fetch unless enabled', async () => {
-    const _source = atom({ name: 'John' });
+    const _source = store({ name: 'John' });
 
-    const store = storeRequest(client, {
+    const _store = storeRequest(client, {
       fetcher: async (sourceData, signal) => sourceData as any,
       source: _source,
     });
 
-    expectState(store, {
+    expectState(_store, {
       enabled: false,
       pending: false,
       status: 'idle',
@@ -245,16 +245,16 @@ test.describe('storeRequest', () => {
 
     _source.set({ name: 'Doe' });
 
-    expectState(store, {
+    expectState(_store, {
       enabled: false,
       pending: false,
       status: 'idle',
       fetchStatus: 'idle',
     });
 
-    store.enable(true);
+    _store.enable(true);
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: true,
       status: 'pending',
@@ -263,7 +263,7 @@ test.describe('storeRequest', () => {
 
     await Promise.resolve();
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: false,
       status: 'success',
@@ -276,16 +276,16 @@ test.describe('storeRequest', () => {
   //
 
   test('When change the source, it must trigger a fetch when enabled', async () => {
-    const _source = atom({ name: 'John' });
+    const _source = store({ name: 'John' });
 
-    const store = storeRequest(client, {
+    const _store = storeRequest(client, {
       fetcher: async (sourceData, signal) => sourceData as any,
       source: _source,
     });
 
-    store.enable(true);
+    _store.enable(true);
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: true,
       status: 'pending',
@@ -294,7 +294,7 @@ test.describe('storeRequest', () => {
 
     await Promise.resolve();
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: false,
       status: 'success',
@@ -304,7 +304,7 @@ test.describe('storeRequest', () => {
 
     _source.set({ name: 'Doe' });
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: true,
       error: undefined,
@@ -315,7 +315,7 @@ test.describe('storeRequest', () => {
 
     await Promise.resolve();
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: false,
       status: 'success',
@@ -449,9 +449,9 @@ test.describe('storeRequest', () => {
   //
 
   test('StoreRequestOptions.compare should avoid fetch', async () => {
-    const source = atom({ name: 'John' });
+    const source = store({ name: 'John' });
 
-    const store = storeRequest(client, {
+    const _store = storeRequest(client, {
       fetcher: async (source) => source,
       source,
       compare: (sourceData) => [sourceData.name],
@@ -460,7 +460,7 @@ test.describe('storeRequest', () => {
     //
     //
 
-    expectState(store, {
+    expectState(_store, {
       enabled: false,
       pending: false,
       status: 'idle',
@@ -470,13 +470,13 @@ test.describe('storeRequest', () => {
     //
     //
 
-    store.enable(true);
+    _store.enable(true);
     await Promise.resolve();
 
     //
     //
 
-    expectState(store, {
+    expectState(_store, {
       data: { name: 'John' },
       enabled: true,
       pending: false,
@@ -493,7 +493,7 @@ test.describe('storeRequest', () => {
     //
     //
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: false,
       status: 'success',
@@ -509,7 +509,7 @@ test.describe('storeRequest', () => {
     //
     //
 
-    expectState(store, {
+    expectState(_store, {
       data: { name: 'John' },
       enabled: true,
       pending: true,
@@ -526,7 +526,7 @@ test.describe('storeRequest', () => {
     //
     //
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: false,
       status: 'success',
@@ -544,9 +544,9 @@ test.describe('storeRequest', () => {
       onlineManager: testingManager(false),
     });
 
-    const source = atom({ name: 'Jhon' });
+    const source = store({ name: 'Jhon' });
 
-    const store = storeRequest(client, {
+    const _store = storeRequest(client, {
       fetcher: async (source) => source,
       source,
     });
@@ -554,19 +554,19 @@ test.describe('storeRequest', () => {
     //
     // Initial state must be idle
 
-    expectState(store, {
+    expectState(_store, {
       enabled: false,
       pending: false,
       status: 'idle',
       fetchStatus: 'idle',
     });
 
-    store.enable(true);
+    _store.enable(true);
 
     //
     // Must be paused
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: true,
       status: 'pending',
@@ -579,7 +579,7 @@ test.describe('storeRequest', () => {
     // @ts-ignore Testing has set
     client.onlineManager.set(true);
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: true,
       status: 'pending',
@@ -594,7 +594,7 @@ test.describe('storeRequest', () => {
     //
     // Must be success
 
-    expectState(store, {
+    expectState(_store, {
       enabled: true,
       pending: false,
       status: 'success',

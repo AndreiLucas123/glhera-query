@@ -21,7 +21,7 @@ export function focusManager(): GLHeraManager {
   //
   //
 
-  const isFocused = signalFactory<boolean>(getVisibilityState());
+  const isFocused = signalFactory(getVisibilityState());
 
   //
   //
@@ -44,7 +44,7 @@ export function focusManager(): GLHeraManager {
  * Manages the online/offline state of the browser.
  */
 export function onlineManager(): GLHeraManager {
-  const isOnline = signalFactory<boolean>(navigator.onLine);
+  const isOnline = signalFactory(navigator.onLine);
 
   //
   //
@@ -73,7 +73,7 @@ export function onlineManager(): GLHeraManager {
  * @returns A manager that always returns the initial value.
  */
 export function testingManager(initial: boolean): GLHeraManager {
-  const signal = signalFactory<boolean>(initial);
+  const signal = signalFactory(initial);
 
   //
   // @ts-ignore

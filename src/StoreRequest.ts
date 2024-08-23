@@ -46,11 +46,7 @@ export function storeRequest<T, U>(
   //
   //
 
-  const state = signalFactory<StoreRequestState<T>>(_internalState);
-
-  const set = state.set;
-  // @ts-ignore
-  delete state.set;
+  const state = signalFactory(_internalState);
 
   //
   //
@@ -93,7 +89,8 @@ export function storeRequest<T, U>(
       ..._internalState,
       ...newState,
     };
-    set(_internalState);
+
+    state.set(_internalState);
   }
 
   //
@@ -212,8 +209,8 @@ export function storeRequest<T, U>(
   //
 
   const output: StoreRequest<T, U> = {
-    get: state.get,
-    subscribe: state.subscribe,
+    get: state.get.bind(state),
+    subscribe: state.subscribe.bind(state),
     fetch,
     fetcher,
     setInitial,

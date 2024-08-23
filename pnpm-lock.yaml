@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       signal-factory:
-        specifier: 1.0.0-next.4
-        version: 1.0.0-next.4
+        specifier: 1.0.0-next.6
+        version: 1.0.0-next.6
     devDependencies:
       '@playwright/test':
         specifier: ^1.46.1
@@ -353,8 +353,8 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
-  signal-factory@1.0.0-next.4:
-    resolution: {integrity: sha512-JAOyY+au67pJt3vu6KxDal3PMGcoPHlynT85qupMkAKKvGTLdS8ztSZrUsLLMFZerqw1vHsPWPK1iG5jSweyxg==}
+  signal-factory@1.0.0-next.6:
+    resolution: {integrity: sha512-cT5FbFQ4ZO39T6CgEBVaKOXBLXElzGDWc8u3+wvs48effGdTB5CTqZ8MbvLN8tmKRvo/i78P4Apt3KCgB5AbwQ==}
 
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
@@ -621,7 +621,7 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.21.0
       fsevents: 2.3.3
 
-  signal-factory@1.0.0-next.4: {}
+  signal-factory@1.0.0-next.6: {}
 
   supports-color@5.5.0:
     dependencies:
