@@ -38,7 +38,7 @@ test.describe('storeRequest', () => {
   //
   //
 
-  test('When created with enabled false, it should not be peding and not fetch', async () => {
+  test('When created with enabled false, it should not be pending and not fetch', async () => {
     const store = storeRequest(client, {
       fetcher: async () => ({ name: 'John' }),
       source,

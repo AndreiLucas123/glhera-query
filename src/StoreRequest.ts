@@ -186,14 +186,11 @@ export function storeRequest<T, U>(
   //
 
   function setInitial(initial: { data?: T; error?: any }) {
-    updateState({
-      lastFetchTime: new Date(),
-    });
-
     if (initial.data !== undefined) {
       updateState({
         data: initial.data,
         status: 'success',
+        lastFetchTime: new Date(),
       });
     }
 
@@ -201,6 +198,7 @@ export function storeRequest<T, U>(
       updateState({
         error: initial.error,
         status: 'error',
+        lastFetchTime: new Date(),
       });
     }
   }
