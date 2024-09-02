@@ -1,4 +1,4 @@
-import { ReadableSignal, signalFactory } from 'signal-factory';
+import { type ReadableSignal, Store } from 'simorg-store';
 
 /**
  * A manager that handles the focus and online state of the browser.
@@ -21,7 +21,7 @@ export function focusManager(): GLHeraManager {
   //
   //
 
-  const isFocused = signalFactory(getVisibilityState());
+  const isFocused = new Store(getVisibilityState());
 
   //
   //
@@ -44,7 +44,7 @@ export function focusManager(): GLHeraManager {
  * Manages the online/offline state of the browser.
  */
 export function onlineManager(): GLHeraManager {
-  const isOnline = signalFactory(navigator.onLine);
+  const isOnline = new Store(navigator.onLine);
 
   //
   //
@@ -73,7 +73,7 @@ export function onlineManager(): GLHeraManager {
  * @returns A manager that always returns the initial value.
  */
 export function testingManager(initial: boolean): GLHeraManager {
-  const signal = signalFactory(initial);
+  const signal = new Store(initial);
 
   //
   // @ts-ignore

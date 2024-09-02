@@ -1,4 +1,4 @@
-import type { ReadableSignal } from 'signal-factory';
+import type { ReadableSignal } from 'simorg-store';
 
 //
 //

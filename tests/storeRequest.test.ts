@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { setSignalFactory } from 'signal-factory';
-import { store } from 'signal-factory/store';
+import { Store } from 'simorg-store';
 import { glheraClient, storeRequest, testingManager } from '../src';
 import type { StoreRequestState } from '../src/StoreRequestTypes';
 
@@ -8,9 +7,7 @@ import type { StoreRequestState } from '../src/StoreRequestTypes';
 //
 
 test.describe('storeRequest', () => {
-  setSignalFactory(store);
-
-  const source = store(1);
+  const source = new Store(1);
 
   const client = glheraClient({
     focusManager: testingManager(true),
@@ -173,7 +170,7 @@ test.describe('storeRequest', () => {
 
   test('Should cancel the fetch accordingly', async () => {
     let aborted = false;
-    const timeSignal = store(300);
+    const timeSignal = new Store(300);
 
     //
     //
@@ -229,7 +226,7 @@ test.describe('storeRequest', () => {
   //
 
   test('When change the source, it must not trigger a fetch unless enabled', async () => {
-    const _source = store({ name: 'John' });
+    const _source = new Store({ name: 'John' });
 
     const _store = storeRequest(client, {
       fetcher: async (sourceData, signal) => sourceData as any,
@@ -276,7 +273,7 @@ test.describe('storeRequest', () => {
   //
 
   test('When change the source, it must trigger a fetch when enabled', async () => {
-    const _source = store({ name: 'John' });
+    const _source = new Store({ name: 'John' });
 
     const _store = storeRequest(client, {
       fetcher: async (sourceData, signal) => sourceData as any,
@@ -449,7 +446,7 @@ test.describe('storeRequest', () => {
   //
 
   test('StoreRequestOptions.compare should avoid fetch', async () => {
-    const source = store({ name: 'John' });
+    const source = new Store({ name: 'John' });
 
     const _store = storeRequest(client, {
       fetcher: async (source) => source,
@@ -544,7 +541,7 @@ test.describe('storeRequest', () => {
       onlineManager: testingManager(false),
     });
 
-    const source = store({ name: 'Jhon' });
+    const source = new Store({ name: 'Jhon' });
 
     const _store = storeRequest(client, {
       fetcher: async (source) => source,

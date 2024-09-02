@@ -1,10 +1,10 @@
-import { signalFactory } from 'signal-factory';
-import {
+import { Store } from 'simorg-store';
+import type {
   StoreRequest,
   StoreRequestOptions,
   StoreRequestState,
 } from './StoreRequestTypes';
-import { GLHeraClient } from './glheraClient';
+import type { GLHeraClient } from './glheraClient';
 
 //
 //
@@ -46,7 +46,7 @@ export function storeRequest<T, U>(
   //
   //
 
-  const state = signalFactory(_internalState);
+  const state = new Store(_internalState);
 
   //
   //

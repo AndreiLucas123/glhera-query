@@ -1,4 +1,4 @@
-import { focusManager, GLHeraManager, onlineManager } from './managers';
+import { focusManager, type GLHeraManager, onlineManager } from './managers';
 
 //
 //
@@ -19,9 +19,7 @@ export type GLHeraClientOptions = {
 //
 //
 
-export function glheraClient(
-  opts: GLHeraClientOptions = {},
-): GLHeraClient {
+export function glheraClient(opts: GLHeraClientOptions = {}): GLHeraClient {
   //
 
   const _onlineManager = opts.onlineManager || onlineManager();

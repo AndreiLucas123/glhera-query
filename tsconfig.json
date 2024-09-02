@@ -11,7 +11,8 @@
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": true,
     "declaration": true,
-    "emitDeclarationOnly": true
+    "emitDeclarationOnly": true,
+    "verbatimModuleSyntax": true
   },
   "include": ["src", "tests"]
 }
